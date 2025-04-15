@@ -1,0 +1,4 @@
+[submodule "nopSolution"]
+	path = nopSolution
+	url = git@github.com:opensoft/nopCommerce.git
+	branch = develop
