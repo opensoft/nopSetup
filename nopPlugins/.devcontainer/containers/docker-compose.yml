@@ -1,0 +1,49 @@
+name: Nop_Dev_Stack
+version: "3.7"
+services:
+    nop.dev.web:
+        container_name: nop.dev.web
+        build:
+            context: ..
+            dockerfile: ./containers/Nop.Web/Dockerfile
+            args:
+                IDE_USER: "${USER:-defaultuser}"  # Default to 'defaultuser' if USER is not set
+                IDE_UID: ${USERID:-1000}         # Default to '1000' if USERID is not set
+                IDE_GID: ${GROUPID:-1000}        # Default to '1000' if GROUPID is not set
+                DEBUG: "${DEBUG:-false}"         # Default to 'false' if DEBUG is not set
+        user: "${USER:-defaultuser}"
+        environment:
+            - USER=${USER:-defaultuser}
+            - USERID=${USERID:-1000}
+            - GROUPID=${GROUPID:-1000}
+            - DEBUG=${DEBUG:-false}             # Pass DEBUG to the container environment
+            - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}  # Default to Development if not set
+            - DOTNET_RUNNING_IN_CONTAINER=true   # Indicate that the app is running in a container
+            - CUSTOM_ENV_VAR=${CUSTOM_ENV_VAR:-default_value}  # Add a custom environment variable
+        ports:
+            - "8180:8180"
+        depends_on:
+            nop.dev.mssql:                       # Updated service name to match changes
+                condition: service_started
+                required: true
+        networks:
+            - nop.dev.net                        # Removed trailing colon
+        volumes:
+            - type: bind
+              source: ../
+              target: /workspace/.devcontainer
+    nop.dev.mssql:                             # Updated service name to match changes
+        image: "mcr.microsoft.com/mssql/server:2019-latest"
+        container_name: nop.dev.mssql            # Updated container name to match changes
+        environment:
+            SA_PASSWORD: "${MSSQL_SA_PASSWORD:-YourStrong@Passw0rd}"  # Default password if not set
+            ACCEPT_EULA: "Y"
+            MSSQL_PID: "Express"
+        networks:
+            - nop.dev.net                        # Updated network name to match changes
+        ports:
+            - "1133:1133"  # Expose SQL Server port
+
+networks:
+  nop.dev.net:                                  # Updated network name to match changes
+    driver: bridge
