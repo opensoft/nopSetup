@@ -1,0 +1,157 @@
+# Stage 1: Use the official pre-compiled nopCommerce image as the final base
+# Replace 'latest' or '4.80' with the specific nopCommerce version tag you need
+FROM nopcommerceteam/nopcommerce:latest AS base
+
+USER root
+
+RUN apk update && \
+    apk add --no-cache \
+        sudo \
+        openssh-client \
+        rsync \
+        shadow \
+        zsh && \
+    rm -rf /var/cache/apk/*
+# Ensure the .zshrc file exists in the build context before uncommenting the next line
+#COPY .zshrc /root/.zshrc
+WORKDIR /workspace
+
+
+# Accept build arguments for username, UID, and GID from docker-compose
+ARG IDE_USER
+ARG IDE_UID
+ARG IDE_GID
+
+# Accept a debug argument for conditional logging during build
+ARG DEBUG=false
+
+# Set DEBUG as an environment variable for runtime
+ENV DEBUG=${DEBUG}
+
+# in debug mode, show these values
+RUN if [ "$DEBUG" = "true" ]; then \
+        echo "the passed arg IDE-USER= ${IDE_USER}"; \
+        echo "the passed arg IDE-UID= ${IDE_UID}"; \
+        echo "the passed arg IDE-GID= ${IDE_GID}"; \
+        echo "the passed env DEBUG= ${DEBUG}"; \
+    fi
+
+
+    
+# Remove container image user and group if they conflict with the remoteUser from docker-compose/devcontainer.json
+# This is important to avoid conflicts with the user and group IDs
+# Step 2: Delete user (if exists)
+RUN if grep -q ":${IDE_UID}:" /etc/passwd; then \
+      userdel --force -r $(grep ":${IDE_UID}:" /etc/passwd | cut -d: -f1); \
+    fi && \
+    if [ "$DEBUG" = "true" ]; then \
+        echo "User with UID ${IDE_UID} deleted if it existed."; \
+    fi && \
+    # Delete group if it matches IDE_GID
+    if grep -q ":${IDE_GID}:" /etc/group; then \
+      groupdel $(grep ":${IDE_GID}:" /etc/group | cut -d: -f1); \
+    fi && \
+    if [ "$DEBUG" = "true" ]; then \
+        echo "Group with GID ${IDE_GID} deleted if it existed."; \
+    fi
+
+
+
+# Create the docker-compose/devcontainer.json user and add to the sudo group
+# only echo out the status if in debug mode
+RUN set -eux && \
+    if [ "$DEBUG" = "true" ]; then \
+        echo "Creating group if it does not exist..."; \
+    fi && \
+    if ! getent group "${IDE_GID}" >/dev/null; then \
+        groupadd --gid "${IDE_GID}" "${IDE_USER}" || (echo "Error: Failed to create group with GID ${IDE_GID}" && exit 1); \
+    else \
+        if [ "$DEBUG" = "true" ]; then \
+            echo "Group with GID ${IDE_GID} already exists."; \
+        fi; \
+    fi && \
+    if [ "$DEBUG" = "true" ]; then \
+        echo "Creating user if it does not exist..."; \
+    fi && \
+    if ! id -u "${IDE_USER}" >/dev/null 2>&1; then \
+        useradd --uid "${IDE_UID}" --gid "${IDE_GID}" -m "${IDE_USER}" || (echo "Error: Failed to create user ${IDE_USER} with UID ${IDE_UID} and GID ${IDE_GID}" && exit 1); \
+    else \
+        if [ "$DEBUG" = "true" ]; then \
+            echo "User ${IDE_USER} already exists."; \
+        fi; \
+    fi && \
+    if [ "$DEBUG" = "true" ]; then \
+        echo "Adding user to sudoers..."; \
+    fi && \
+    SUDO_FILE="/etc/sudoers.d/${IDE_USER}" && \
+    SUDO_LINE="${IDE_USER} ALL=(ALL) NOPASSWD:ALL" && \
+    touch "${SUDO_FILE}" && \
+    grep -qF -- "${SUDO_LINE}" "${SUDO_FILE}" || echo "${SUDO_LINE}" >> "${SUDO_FILE}" && \
+    chmod 0440 "${SUDO_FILE}" && \
+    if [ "$DEBUG" = "true" ]; then \
+        echo "Verifying user creation..."; \
+    fi && \
+    getent passwd "${IDE_USER}" || (echo "Error: User ${IDE_USER} was not created!" && exit 1)
+
+
+
+
+
+
+WORKDIR /app
+
+# --- Optional: If you need specific runtime dependencies for your plugin ---
+# Example: Install graphics libraries if your plugin manipulates images
+# USER root # Switch to root to install packages
+# RUN apt-get update && apt-get install -y --no-install-recommends libgdiplus libc6-dev \
+#  && rm -rf /var/lib/apt/lists/*
+# USER app # Switch back to the default non-root user 'app'
+# --------------------------------------------------------------------------
+
+##############################
+#                            #
+#      Stage 2 - Build       #
+#                            #
+############################## 
+    
+# Stage 2: Build the plugin using the .NET SDK
+
+# Use an SDK version compatible with your nopCommerce version's target framework
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build-plugin
+
+# --- Copy only your plugin's source code ---
+# Adjust the source path './src/Plugins/MyCompany.MyPlugin' to match your local structure
+WORKDIR /
+COPY ./nopPlugins.sln .
+COPY ./src/Plugins/ ./src/Plugins/
+# ---
+
+# Restore dependencies for your plugin
+#RUN dotnet restore ./nopPlugins.sln
+
+
+# Build your plugin in Debug mode for debugging symbols, or Release for production
+# Output the build directly into a structure matching the final /app/Plugins layout
+#RUN dotnet build ./nopPlugins.sln --no-restore -c Debug -o /app/Plugins
+
+# Stage 3: Copy the built plugin into the base image
+FROM base
+
+# Copy only the built plugin from the build-plugin stage
+#COPY --from=build-plugin /app/Plugins/ /app/Plugins/
+
+# The base image already has the correct WORKDIR /app and ENTRYPOINT
+# ENTRYPOINT ["dotnet", "Nop.Web.dll"] # Inherited from base image
+
+# Keep container running indefinitely (useful for debugging or if ENTRYPOINT is overridden elsewhere)
+# Note: This will likely override the base image's default CMD or be passed as args to the ENTRYPOINT.
+# If you want to run the default Nop.Web.dll AND keep it running if it crashes,
+# consider using a process manager or overriding the command in docker-compose/devcontainer.json.
+# Change ownership of the entire application directory recursively
+RUN set -eux && \
+    chown -R ${IDE_UID}:${IDE_GID} /app && \
+    echo "Changed ownership for /app directory" && \
+    chmod -R 755 /app && \
+    echo "Set permissions for /app directory" && \
+    echo "Dockerfile setup complete." 
+CMD ["sleep", "infinity"]
