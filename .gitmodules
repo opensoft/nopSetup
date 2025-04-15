@@ -2,3 +2,7 @@
 	path = nopSolution
 	url = git@github.com:opensoft/nopCommerce.git
 	branch = develop
+[submodule "nopPlugins"]
+	path = nopPlugins
+	url = git@github.com:opensoft/nopPlugins.git
+	branch = develop
