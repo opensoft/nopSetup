@@ -8,18 +8,18 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # --- Run additional setup scripts ---
 
-# Run getSupProjects script
-GET_SUP_PROJECTS_SCRIPT="$SCRIPT_DIR/scripts/getSupProjects.sh" # Assuming location relative to setup.sh
-if [ -f "$GET_SUP_PROJECTS_SCRIPT" ]; then
-    echo "Running setup script: $GET_SUP_PROJECTS_SCRIPT"
-    bash "$GET_SUP_PROJECTS_SCRIPT"
+# Run getSubProjects script
+GET_SUB_PROJECTS_SCRIPT="$SCRIPT_DIR/scripts/getSubProjects.sh" # Assuming location relative to setup.sh
+if [ -f "$GET_SUB_PROJECTS_SCRIPT" ]; then
+    echo "Running setup script: $GET_SUB_PROJECTS_SCRIPT"
+    bash "$GET_SUB_PROJECTS_SCRIPT"
     if [ $? -ne 0 ]; then
-        echo "Warning: $GET_SUP_PROJECTS_SCRIPT finished with errors."
+        echo "Warning: $GET_SUB_PROJECTS_SCRIPT finished with errors."
     else
-        echo "$GET_SUP_PROJECTS_SCRIPT completed successfully."
+        echo "$GET_SUB_PROJECTS_SCRIPT completed successfully."
     fi
 else
-    echo "Warning: Setup script not found: $GET_SUP_PROJECTS_SCRIPT"
+    echo "Warning: Setup script not found: $GET_SUB_PROJECTS_SCRIPT"
 fi
 
 # Run addClone2Shell script
