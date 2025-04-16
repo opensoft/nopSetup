@@ -96,14 +96,17 @@ elif [ -d "nopCommerce" ]; then
     rm -rf nopCommerce # Remove the existing directory
     # Note: 'git clone' might fail if the directory is not empty.
     echo "Cloning nopCommerce repository..."
-    git clone git@github.com:opensoft/nopCommerce.git .
+    git clone git@github.com:opensoft/nopCommerce.git nopCommerce
     if [ $? -ne 0 ]; then
         echo "Error: Cloning into existing 'nopCommerce' directory failed. It might not be empty."
         echo "Please manually clean up the 'nopCommerce' directory or remove it and run the script again."
         exit 1
+    else 
+        cd nopCommerce || exit 1
+        git checkout develop
+        cd .. || exit 1
+        echo "NopCommerce repository cloned successfully."
     fi
-    cd .. || exit 1
-    echo "NopCommerce repository updated."
 else
     # Directory does not exist
     echo "Cloning nopCommerce repository..."
