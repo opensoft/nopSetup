@@ -92,8 +92,8 @@ if [ -d "nopCommerce/.git" ]; then
     echo "NopCommerce repository updated."
 elif [ -d "nopCommerce" ]; then
     # Directory exists but is not a Git repository
-    echo "Warning: 'nopCommerce' directory exists but is not a valid Git repository. Attempting to clone into it."
-    cd nopCommerce || exit 1
+    echo "Warning: 'nopCommerce' directory exists but is not a valid Git repository. Removing and Cloning."
+    rm -rf nopCommerce # Remove the existing directory
     # Note: 'git clone' might fail if the directory is not empty.
     cd nopCommerce || exit 1
     echo "Cloning nopCommerce repository..."
