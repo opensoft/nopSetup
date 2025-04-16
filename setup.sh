@@ -28,5 +28,15 @@ if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
     fi
 fi
 
+echo "cloning nopCommerce..."
+git clone git@github.com:opensoft/nopCommerce.git
+git checkout develop
+echo "NopCommerce cloned successfully."
+
+echo "cloning nopPlugins..."
+git clone git@github.com:opensoft/nopPlugins.git
+git checkout develop
+echo "NopPlugins cloned successfully."
+
 echo "nopCommerce development tools are now available."
 echo "You can use the \"clone\" command from any nopCommerce directory to clone plugins."

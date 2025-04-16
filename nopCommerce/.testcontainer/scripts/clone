@@ -1,0 +1,419 @@
+#!/bin/bash
+
+# Enable verbose mode if --verbose or -v is passed
+VERBOSE=false
+if [[ "$1" == "--verbose" || "$1" == "-v" ]]; then
+  VERBOSE=true
+  shift
+fi
+
+# Function to echo messages in verbose mode
+log() {
+  if [ "$VERBOSE" = true ]; then
+    echo "[DEBUG] $1"
+  fi
+}
+
+# Ensure the script is run under the nopCommerce project folder
+log "Checking if the script is run under the nopCommerce project folder..."
+if [[ "$(pwd)" != *"/nopCommerce"* ]]; then
+  echo "Error: This script must be run from within the 'nopCommerce' project folder."
+  exit 1
+fi
+
+# Check for help option
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+  echo "Usage: clone [OPTIONS] <repo-name>"
+  echo
+  echo "This script clones or removes a repository in the 'src/Plugins' directory of the nopCommerce project."
+  echo "When cloning, it creates a folder of the same name as the full repo name, updates the .gitignore file,"
+  echo "and adds the project to the solution file."
+  echo "When removing, it deletes the folder, removes the .gitignore entry, and removes the project from the solution file."
+  echo
+  echo "Arguments:"
+  echo "  <repo-name>       The last word of the name of the repository to clone or remove."
+  echo "                   (e.g., 'Testplugin' for the repo 'Nop.Plugin.Opensoft.Testplugin')."
+  echo
+  echo "Options:"
+  echo "  -h, --help        Show this help message and exit."
+  echo "  -v, --verbose     Enable verbose mode for detailed debug messages."
+  echo "  -rm, --remove     Remove the cloned repository, its .gitignore entry, and its solution file entry."
+  echo "  -s, --site        Clone multiple repositories for a site listed in the PluginList file for that site."
+  echo
+  echo "Examples:"
+  echo "  clone --verbose Testplugin"
+  echo "      Clone the repository 'Nop.Plugin.Opensoft.Testplugin' into 'src/Plugins',"
+  echo "      create a folder of the same name as the full repo name, update the .gitignore file,"
+  echo "      and add the project to the solution file."
+  echo
+  echo "  clone --remove Testplugin"
+  echo "      Remove the repository 'Nop.Plugin.Opensoft.Testplugin', its .gitignore entry,"
+  echo "      and its solution file entry."
+  echo
+  echo "  clone --site <site-name>"
+  echo "      Clone all repositories for a site listed in the PluginList file under the corresponding site folder."
+  echo
+  echo "  clone -rm --site <site-name>"
+  echo "      Remove all repositories for a site listed in the PluginList file under the corresponding site folder."
+  exit 0
+fi
+
+# Save the current working directory
+CURRENT_DIR=$(pwd)
+log "Current directory: $CURRENT_DIR"
+
+# Change to the nopCommerce root directory
+NOPCOMMERCE_ROOT=$(pwd | sed 's|\(.*nopCommerce\).*|\1|')
+log "Changing to nopCommerce root directory: $NOPCOMMERCE_ROOT"
+cd "$NOPCOMMERCE_ROOT"
+
+# Check if a repository name argument is provided
+if [ -z "$1" ]; then
+  echo "Usage: clone [--verbose | -v] [--remove | -rm] [--site | -s] <repo-name>"
+  cd "$CURRENT_DIR"
+  exit 1
+fi
+
+# Suggest correct usage if the user types `-r` instead of `-rm`
+if [[ "$1" == "-r" ]]; then
+  echo "Error: Invalid option '-r'. Did you mean 'clone -rm <repo-name>'?"
+  cd "$CURRENT_DIR"
+  exit 1
+fi
+
+if [[ "$1" == "--verbose" || "$1" == "-v" ]] && [ -z "$2" ]; then
+  echo "Error: The --verbose or -v option must be followed by a repository name or action."
+  echo "Usage: clone [--verbose | -v] [--remove | -rm] [--site | -s] <repo-name>"
+  cd "$CURRENT_DIR"
+  exit 1
+fi
+
+if [[ "$1" == "--remove" || "$1" == "-rm" ]] && [ -z "$2" ]]; then
+  echo "Usage: clone [--verbose | -v] [--remove | -rm] [--site | -s] <repo-name>"
+  cd "$CURRENT_DIR"
+  exit 1
+fi
+
+# Check for the --site or -s option
+if [[ "$1" == "--site" || "$1" == "-s" ]]; then
+  # Ensure a site name is provided
+  if [ -z "$2" ]; then
+    echo "Error: The --site or -s option must be followed by a site name."
+    echo "Usage: clone --site <site-name>"
+    exit 1
+  fi
+
+  SITE_NAME=$2
+  PLUGIN_LIST_FILE="$NOPCOMMERCE_ROOT/.devcontainer/Sites/$SITE_NAME/PluginList.txt"  # Include .txt extension
+
+  # Ensure the PluginList.txt file exists
+  if [ ! -f "$PLUGIN_LIST_FILE" ]; then
+    echo "Error: PluginList.txt file not found at '$PLUGIN_LIST_FILE'."
+    exit 1
+  fi
+
+  echo "Cloning repositories for site '$SITE_NAME' listed in $PLUGIN_LIST_FILE..."
+  
+  # Read each line in the PluginList.txt file
+  while IFS= read -r REPO_NAME || [ -n "$REPO_NAME" ]; do
+    # Skip empty lines or lines starting with #
+    if [[ -z "$REPO_NAME" || "$REPO_NAME" == \#* ]]; then
+      continue
+    fi
+    REPO_SLUG="$REPO_NAME"
+    RELATIVE_REPO_DIR="src/Plugins/$REPO_SLUG"
+    CLONE_DIR=$(pwd)/$RELATIVE_REPO_DIR
+    GITIGNORE_PATH=$(pwd)/.gitignore
+    SOLUTION_FILE=$(pwd)/src/NopCommerce.sln
+    DEVOPS_PROJECT="FarHeapSolutions@vs-ssh.visualstudio.com:v3/FarHeapSolutions/Nop%20Plugins"
+
+    echo "Cloning repository '$REPO_SLUG'..."
+    log "Cloning using '$DEVOPS_PROJECT/$REPO_SLUG'..."
+    log "Cloning into '$CLONE_DIR'..."
+    git clone $DEVOPS_PROJECT/$REPO_SLUG $CLONE_DIR
+
+    if [ $? -ne 0 ]; then
+      echo "Error: Failed to clone repository '$REPO_SLUG'. Skipping..."
+      continue
+    fi
+
+    echo "Repository '$REPO_SLUG' cloned successfully into '$CLONE_DIR'."
+
+    # Change to the 4.80/develop branch
+    cd "$CLONE_DIR"
+    log "Switching to branch '4.80/develop'..."
+    git checkout 4.80/develop
+
+    if [ $? -ne 0 ]; then
+      echo "Error: Failed to switch to branch '4.80/develop'. Skipping..."
+      cd "$NOPCOMMERCE_ROOT"
+      continue
+    fi
+
+    log "Switched to branch '4.80/develop' successfully."
+
+    # Update the .gitignore file
+    if [ -f "$GITIGNORE_PATH" ]; then
+      echo "Updating .gitignore located at '$GITIGNORE_PATH'..."
+      log "Checking if '$RELATIVE_REPO_DIR/' is already in .gitignore..."
+      
+      if ! grep -q "^$RELATIVE_REPO_DIR/$" "$GITIGNORE_PATH"; then
+        log "Adding '$RELATIVE_REPO_DIR/' to .gitignore..."
+        if [[ -s "$GITIGNORE_PATH" && $(tail -c1 "$GITIGNORE_PATH" | wc -l) -eq 0 ]]; then
+          echo "" >> "$GITIGNORE_PATH"
+        fi
+        echo "$RELATIVE_REPO_DIR/" >> "$GITIGNORE_PATH"
+        echo ".gitignore updated with '$REPO_SLUG/'."
+        
+        log "Committing changes to .gitignore..."
+        cd $(dirname "$GITIGNORE_PATH")
+        git add .gitignore
+        git commit -m "Updated .gitignore to ignore '$RELATIVE_REPO_DIR/'"
+        echo "Changes committed to .gitignore."
+      else
+        echo "'$REPO_SLUG/' is already present in .gitignore."
+      fi
+    else
+      echo "Error: .gitignore file not found at '$GITIGNORE_PATH'."
+      cd "$NOPCOMMERCE_ROOT"
+      continue
+    fi
+
+    # Add the cloned project to the solution file
+    if [ -f "$SOLUTION_FILE" ]; then
+      echo "Adding '$RELATIVE_REPO_DIR' to the solution file '$SOLUTION_FILE'..."
+      log "Running 'dotnet sln add' for '$CLONE_DIR/$REPO_SLUG.csproj'..."
+      dotnet sln "$SOLUTION_FILE" add "$CLONE_DIR/$REPO_SLUG.csproj"
+      if [ $? -eq 0 ]; then
+        echo "Project '$REPO_SLUG' added to the solution successfully."
+      else
+        echo "Error: Failed to add project '$REPO_SLUG' to the solution."
+      fi
+    else
+      echo "Error: Solution file '$SOLUTION_FILE' not found."
+    fi
+
+    # Return to the nopCommerce root directory
+    cd "$NOPCOMMERCE_ROOT"
+  done < "$PLUGIN_LIST_FILE"
+
+  echo "All repositories for site '$SITE_NAME' listed in $PLUGIN_LIST_FILE processed."
+  exit 0
+fi
+
+# Check for the --site or -s option with --remove or -rm
+if [[ "$1" == "--remove" || "$1" == "-rm" ]] && [[ "$2" == "--site" || "$2" == "-s" ]]; then
+  # Ensure a site name is provided
+  if [ -z "$3" ]; then
+    echo "Error: The --site or -s option must be followed by a site name."
+    echo "Usage: clone -rm --site <site-name>"
+    exit 1
+  fi
+
+  SITE_NAME=$3
+  PLUGIN_LIST_FILE="$NOPCOMMERCE_ROOT/.devcontainer/Sites/$SITE_NAME/PluginList.txt"  # Include .txt extension
+
+  # Ensure the PluginList.txt file exists
+  if [ ! -f "$PLUGIN_LIST_FILE" ]; then
+    echo "Error: PluginList.txt file not found at '$PLUGIN_LIST_FILE'."
+    exit 1
+  fi
+
+  echo "Removing repositories for site '$SITE_NAME' listed in $PLUGIN_LIST_FILE..."
+  
+  # Read each line in the PluginList.txt file
+  while IFS= read -r REPO_NAME || [ -n "$REPO_NAME" ]; do
+    # Skip empty lines or lines starting with #
+    if [[ -z "$REPO_NAME" || "$REPO_NAME" == \#* ]]; then
+      continue
+    fi
+
+    REPO_SLUG="$REPO_NAME"
+    RELATIVE_REPO_DIR="src/Plugins/$REPO_SLUG"
+    CLONE_DIR=$(pwd)/$RELATIVE_REPO_DIR
+    GITIGNORE_PATH=$(pwd)/.gitignore
+    SOLUTION_FILE=$(pwd)/src/NopCommerce.sln
+
+    echo "Removing repository '$REPO_SLUG'..."
+
+    # Remove the folder
+    if [ -d "$CLONE_DIR" ]; then
+      log "Removing folder: $CLONE_DIR"
+      rm -rf "$CLONE_DIR"
+      echo "Folder '$CLONE_DIR' removed."
+    else
+      echo "Folder '$CLONE_DIR' does not exist."
+    fi
+
+    # Remove the .gitignore entry
+    if [ -f "$GITIGNORE_PATH" ]; then
+      log "Removing .gitignore entry for '$RELATIVE_REPO_DIR/'..."
+      sed -i "\|^$RELATIVE_REPO_DIR/$|d" "$GITIGNORE_PATH"
+      echo ".gitignore entry for '$RELATIVE_REPO_DIR/' removed."
+      log "Committing changes to .gitignore..."
+      cd $(dirname "$GITIGNORE_PATH")
+      git add .gitignore
+      git commit -m "Removed .gitignore entry for '$RELATIVE_REPO_DIR/'"
+      echo "Changes committed to .gitignore."
+    else
+      echo "Error: .gitignore file not found at '$GITIGNORE_PATH'."
+    fi
+
+    # Remove the project from the solution file
+    if [ -f "$SOLUTION_FILE" ]; then
+      log "Removing project '$CLONE_DIR/$REPO_SLUG.csproj' from solution file..."
+      dotnet sln "$SOLUTION_FILE" remove "$CLONE_DIR/$REPO_SLUG.csproj"
+      if [ $? -eq 0 ]; then
+        echo "Project '$REPO_SLUG' removed from the solution successfully."
+      else
+        echo "Error: Failed to remove project '$REPO_SLUG' from the solution."
+      fi
+    else
+      echo "Error: Solution file '$SOLUTION_FILE' not found."
+    fi
+
+  done < "$PLUGIN_LIST_FILE"
+
+  echo "All repositories for site '$SITE_NAME' listed in $PLUGIN_LIST_FILE have been removed."
+  exit 0
+fi
+
+# Variables
+ACTION=$1
+REPO_NAME=$2
+if [[ "$ACTION" != "--remove" && "$ACTION" != "-rm" ]]; then
+  REPO_NAME=$1
+fi
+REPO_SLUG="Nop.Plugin.Opensoft.$REPO_NAME"
+RELATIVE_REPO_DIR="src/Plugins/$REPO_SLUG"
+CLONE_DIR=$(pwd)/$RELATIVE_REPO_DIR
+GITIGNORE_PATH=$(pwd)/.gitignore
+SOLUTION_FILE=$(pwd)/src/NopCommerce.sln
+DEVOPS_PROJECT="FarHeapSolutions@vs-ssh.visualstudio.com:v3/FarHeapSolutions/Nop%20Plugins"
+
+log "Action: $ACTION"
+log "Repository name: $REPO_NAME"
+log "Repository slug: $REPO_SLUG"
+log "Clone directory: $CLONE_DIR"
+log "Gitignore path: $GITIGNORE_PATH"
+log "Solution file: $SOLUTION_FILE"
+
+# Handle removal
+if [[ "$ACTION" == "--remove" || "$ACTION" == "-rm" ]]; then
+  echo "Removing repository '$REPO_SLUG'..."
+
+  # Remove the folder
+  if [ -d "$CLONE_DIR" ]; then
+    log "Removing folder: $CLONE_DIR"
+    rm -rf "$CLONE_DIR"
+    echo "Folder '$CLONE_DIR' removed."
+  else
+    echo "Folder '$CLONE_DIR' does not exist."
+  fi
+
+  # Remove the .gitignore entry
+  if [ -f "$GITIGNORE_PATH" ]; then
+    log "Removing .gitignore entry for '$RELATIVE_REPO_DIR/'..."
+    sed -i "\|^$RELATIVE_REPO_DIR/$|d" "$GITIGNORE_PATH"
+    echo ".gitignore entry for '$RELATIVE_REPO_DIR/' removed."
+    log "Committing changes to .gitignore..."
+    cd $(dirname "$GITIGNORE_PATH")
+    git add .gitignore
+    git commit -m "Removed .gitignore entry for '$RELATIVE_REPO_DIR/'"
+    echo "Changes committed to .gitignore."
+  else
+    echo "Error: .gitignore file not found at '$GITIGNORE_PATH'."
+  fi
+
+  # Remove the project from the solution file
+  if [ -f "$SOLUTION_FILE" ]; then
+    log "Removing project '$CLONE_DIR/$REPO_SLUG.csproj' from solution file..."
+    dotnet sln "$SOLUTION_FILE" remove "$CLONE_DIR/$REPO_SLUG.csproj"
+    if [ $? -eq 0 ]; then
+      echo "Project '$REPO_SLUG' removed from the solution successfully."
+    else
+      echo "Error: Failed to remove project '$REPO_SLUG' from the solution."
+    fi
+  else
+    echo "Error: Solution file '$SOLUTION_FILE' not found."
+  fi
+
+  # Exit after removal
+  cd "$CURRENT_DIR"
+  echo "Repository '$REPO_SLUG' removed successfully."
+  exit 0
+fi
+
+# Clone the repository into ./src/Plugins/
+echo "Cloning repository '$REPO_SLUG'..."
+log "Cloning using '$DEVOPS_PROJECT/$REPO_SLUG'..."
+log "Cloning into '$CLONE_DIR'..."
+git clone $DEVOPS_PROJECT/$REPO_SLUG $CLONE_DIR
+
+if [ $? -ne 0 ]; then
+  echo "Error: Failed to clone repository '$REPO_SLUG'."
+  cd "$CURRENT_DIR"
+  exit 1
+fi
+
+echo "Repository '$REPO_SLUG' cloned successfully into '$CLONE_DIR'."
+
+# Change to the 4.80/develop branch
+cd "$CLONE_DIR"
+log "Switching to branch '4.80/develop'..."
+git checkout 4.80/develop
+
+if [ $? -ne 0 ]; then
+  echo "Error: Failed to switch to branch '4.80/develop'."
+  cd "$CURRENT_DIR"
+  exit 1
+fi
+
+log "Switched to branch '4.80/develop' successfully."
+
+# Update the .gitignore file two levels up
+if [ -f "$GITIGNORE_PATH" ]; then
+  echo "Updating .gitignore located at '$GITIGNORE_PATH'..."
+  log "Checking if '$RELATIVE_REPO_DIR/' is already in .gitignore..."
+  
+  if ! grep -q "^$RELATIVE_REPO_DIR/$" "$GITIGNORE_PATH"; then
+    log "Adding '$RELATIVE_REPO_DIR/' to .gitignore..."
+    if [[ -s "$GITIGNORE_PATH" && $(tail -c1 "$GITIGNORE_PATH" | wc -l) -eq 0 ]]; then
+      echo "" >> "$GITIGNORE_PATH"
+    fi
+    echo "$RELATIVE_REPO_DIR/" >> "$GITIGNORE_PATH"
+    echo ".gitignore updated with '$REPO_SLUG/'."
+    
+    log "Committing changes to .gitignore..."
+    cd $(dirname "$GITIGNORE_PATH")
+    git add .gitignore
+    git commit -m "Updated .gitignore to ignore '$RELATIVE_REPO_DIR/'"
+    echo "Changes committed to .gitignore."
+  else
+    echo "'$REPO_SLUG/' is already present in .gitignore."
+  fi
+else
+  echo "Error: .gitignore file not found at '$GITIGNORE_PATH'."
+  cd "$CURRENT_DIR"
+  exit 1
+fi
+
+# Add the cloned project to the solution file
+if [ -f "$SOLUTION_FILE" ]; then
+  echo "Adding '$RELATIVE_REPO_DIR' to the solution file '$SOLUTION_FILE'..."
+  log "Running 'dotnet sln add' for '$CLONE_DIR/$REPO_SLUG.csproj'..."
+  dotnet sln "$SOLUTION_FILE" add "$CLONE_DIR/$REPO_SLUG.csproj"
+  if [ $? -eq 0 ]; then
+    echo "Project '$REPO_SLUG' added to the solution successfully."
+  else
+    echo "Error: Failed to add project '$REPO_SLUG' to the solution."
+  fi
+else
+  echo "Error: Solution file '$SOLUTION_FILE' not found."
+fi
+
+# Return to the original working directory
+log "Returning to the original working directory: $CURRENT_DIR"
+cd "$CURRENT_DIR"
+
+echo "Script completed successfully."
