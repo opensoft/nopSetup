@@ -1,0 +1,2 @@
+Nop.Plugin.Opensoft.IRSStore
+Nop.Plugin.Misc.ProductAttribute
