@@ -94,17 +94,16 @@ elif [ -d "nopCommerce" ]; then
     # Directory exists but is not a Git repository
     echo "Warning: 'nopCommerce' directory exists but is not a valid Git repository. Attempting to clone into it."
     # Note: 'git clone' might fail if the directory is not empty.
+    cd nopCommerce || exit 1
     echo "Cloning nopCommerce repository..."
-    git clone git@github.com:opensoft/nopCommerce.git nopCommerce
+    git clone git@github.com:opensoft/nopCommerce.git .
     if [ $? -ne 0 ]; then
         echo "Error: Cloning into existing 'nopCommerce' directory failed. It might not be empty."
         echo "Please manually clean up the 'nopCommerce' directory or remove it and run the script again."
         exit 1
     fi
-    cd nopCommerce || exit 1
-    git checkout develop
     cd .. || exit 1
-    echo "NopCommerce repository cloned successfully."
+    echo "NopCommerce repository updated."
 else
     # Directory does not exist
     echo "Cloning nopCommerce repository..."
