@@ -1,11 +1,21 @@
 #!/bin/bash
 
 
-NOPCOMMERCE_BINARIES_URL=""
+
+NOPVERSION="4.80.5" # Set the nopCommerce version here
+
+SOURCE_TYPE=""
+NOP_GITHUB_URL=""
+NOP_GITHUB_BASE_URL="https://github.com/nopSolutions/nopCommerce/releases/download/release-${NOPVERSION}/"
+NOP_GITHUB_SOURCE_FILE="nopCommerce_${NOPVERSION}_Source.zip"
+NOP_GITHUB_BINARIES_FILE="nopCommerce_${NOPVERSION}_binaries.zip"
+NOP_GITHUB_BINARIES_PREFIX="${NOP_GITHUB_BASE_URL}nopCommerce_${NOPVERSION}_NOSource_"
+NOP_GITHUB_BINARIES_SUFFIX="_x64.zip"
+
 # Check OS type
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     echo "Running on Linux"
-    NOPCOMMERCE_BINARIES_URL="https://github.com/nopSolutions/nopCommerce/releases/download/release-4.80.5/nopCommerce_4.80.5_NoSource_linux_x64.zip"
+    OS_TYPE="linux"
     # Check and install unzip
     if ! command -v unzip &> /dev/null; then
         echo "'unzip' command not found. Attempting to install..."
@@ -34,7 +44,7 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     fi
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     echo "Running on macOS"
-    NOPCOMMERCE_BINARIES_URL="https://github.com/nopSolutions/nopCommerce/releases/download/release-4.80.5/nopCommerce_4.80.5_NoSource_mac_x64.zip"
+    OS_TYPE="mac"
     # Check and install unzip
     if ! command -v unzip &> /dev/null; then
         echo "'unzip' command not found. Attempting to install..."
@@ -56,7 +66,7 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     fi
 elif [[ "$OSTYPE" == "cygwin" ]] || [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]]; then
     echo "Running on Windows (using Cygwin/MSYS/Git Bash)"
-    NOPCOMMERCE_BINARIES_URL="https://github.com/nopSolutions/nopCommerce/releases/download/release-4.80.5/nopCommerce_4.80.5_NoSource_win_x64.zip"
+    OS_TYPE="win"
     # Check for unzip
     if ! command -v unzip &> /dev/null; then
         echo "'unzip' command not found."
@@ -122,7 +132,7 @@ fi
 # This is the full source of the nopSolution framework (specific version)
 # This is NOT a repo. Use this for reference or plugin development alongside the repos.
 echo "Downloading nopCommerce source zip (v4.80.5)..."
-curl -L -o nopCommerce_4.80.5_Source.zip https://github.com/nopSolutions/nopCommerce/releases/download/release-4.80.5/nopCommerce_4.80.5_Source.zip
+curl -L -o $NOP_GITHUB_SOURCE_FILE "${NOP_GITHUB_BASE_URL}${NOP_GITHUB_SOURCE_FILE}"
 echo "nopCommerce source zip downloaded."
 
 # Create the nopSolution directory and unzip the source code into it
@@ -155,10 +165,11 @@ echo "-----------------------------------------------------" # Added separator
 #PLUGIN_VERSION="X.Y.Z" # Replace with actual version
 echo "Downloading nopCommerce Binaries zip"
 
-# Create the nopPlugins_Source directory and unzip the source code into it
-echo "Creating nopPlugins_Source directory and unzipping source..."
+# Create the nopPlugins directory and unzip the source code into it
+echo "Creating nopPlugins directory and unzipping source..."
 mkdir -p nopPlugins
-curl -L -o "nopCommerce_4.80.5_binaries.zip" "${NOPCOMMERCE_BINARIES_URL}"
+NOP_GITHUB_BINARIES_URL="${NOP_GITHUB_BINARIES_PREFIX}${OS_TYPE}_NoSource_${NOP_GITHUB_BINARIES_SUFFIX}"
+curl -L -o $NOP_GITHUB_BINARIES_FILE "${NOP_GITHUB_BINARIES_URL}"
 if [ $? -ne 0 ]; then
     echo "Error downloading nopCommerce binaries zip. Please check the URL and version."
     # Decide if you want to exit or continue:
@@ -166,24 +177,24 @@ if [ $? -ne 0 ]; then
 else 
     echo "nopCommerce binaries zip downloaded successfully."
 fi   
-unzip -q "nopCommerce_4.80.5_binaries.zip" -d nopPlugins_Source
-echo "nopPlugins source unzipped into nopPlugins_Source directory."
+unzip -q $NOP_GITHUB_BINARIES_FILE -d nopPlugins
+echo "nopPlugins source unzipped into nopPluginS directory."
 
-# Remove files at the root of nopPlugins_Source, keep subdirectories
-echo "Cleaning up root files in nopPlugins_Source..."
-find nopPlugins_Source/ -maxdepth 1 -type f -delete
-echo "Removed files at the root of nopPlugins_Source, if any."
+# Remove files at the root of nopPlugins, keep subdirectories
+echo "Cleaning up root files in nopPlugins..."
+find nopPlugins/ -maxdepth 1 -type f -delete
+echo "Removed files at the root of nopPlugins, if any."
 
-# Remove files at the root of nopPlugins_Source/src, keep subdirectories (if applicable)
-if [ -d "nopPlugins_Source/src" ]; then
-    echo "Cleaning up root files in nopPlugins_Source/src..."
-    find nopPlugins_Source/src/ -maxdepth 1 -type f -delete
-    echo "Removed files at the root of nopPlugins_Source/src, if any."
+# Remove files at the root of nopPlugins/src, keep subdirectories (if applicable)
+if [ -d "nopPlugins/src" ]; then
+    echo "Cleaning up root files in nopPlugins/src..."
+    find nopPlugins/src/ -maxdepth 1 -type f -delete
+    echo "Removed files at the root of nopPlugins/src, if any."
 fi
 
 # Clean up the downloaded zip file
 echo "Removing downloaded Binaries zip file..."
-rm "nopCommerce_4.80.5_binaries.zip"
+rm $NOP_GITHUB_BINARIES_FILE
 echo "Binaries zip file removed."
 echo "-----------------------------------------------------" # Added separator
 
