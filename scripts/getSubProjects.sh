@@ -197,17 +197,17 @@ unzip -q "$DOWNLOAD_DIR/$NOP_DOWNLOADED_BINARIES_ZIP" -d "$DOWNLOAD_DIR/$NOP_PLU
 if [ $? -eq 0 ]; then
     echo "nopPlugins binaries unzipped into nopPlugins directory."
 
-# # Remove files at the root of nopPlugins, keep subdirectories
-# echo "Cleaning up root files in nopPlugins..."
-# #find nopPlugins/ -maxdepth 1 -type f -delete
-# echo "Removed files at the root of nopPlugins, if any."
+# Remove files at the root of nopPlugins, keep subdirectories, and exclude .sln files
+echo "Cleaning up root files in nopPlugins, excluding .sln files..."
+find "$DOWNLOAD_DIR/$NOP_PLUGINS_RELATIVE_PATH" -maxdepth 1 -type f ! -name "*.sln" -delete
+echo "Removed files at the root of nopPlugins, excluding .sln files."
 
-# # Remove files at the root of nopPlugins/src, keep subdirectories (if applicable)
-# if [ -d "nopPlugins/src" ]; then
-#     echo "Cleaning up root files in nopPlugins/src..."
-#    # find nopPlugins/src/ -maxdepth 1 -type f -delete
-#     echo "Removed files at the root of nopPlugins/src, if any."
-# fi
+# Remove files at the root of nopPlugins/src, keep subdirectories, and exclude .sln files (if applicable)
+if [ -d "$DOWNLOAD_DIR/$NOP_PLUGINS_RELATIVE_PATH/src" ]; then
+    echo "Cleaning up root files in nopPlugins/src, excluding .sln files..."
+    find "$DOWNLOAD_DIR/$NOP_PLUGINS_RELATIVE_PATH/src" -maxdepth 1 -type f ! -name "*.sln" -delete
+    echo "Removed files at the root of nopPlugins/src, excluding .sln files."
+fi
 
 # Clean up the downloaded zip file
 echo "Removing downloaded Binaries zip file..."
