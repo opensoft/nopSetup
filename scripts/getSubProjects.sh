@@ -8,9 +8,10 @@ SOURCE_TYPE=""
 NOP_GITHUB_URL=""
 NOP_GITHUB_BASE_URL="https://github.com/nopSolutions/nopCommerce/releases/download/release-${NOPVERSION}/"
 NOP_GITHUB_SOURCE_FILE="nopCommerce_${NOPVERSION}_Source.zip"
-NOP_GITHUB_BINARIES_FILE="nopCommerce_${NOPVERSION}_binaries.zip"
-NOP_GITHUB_BINARIES_PREFIX="${NOP_GITHUB_BASE_URL}nopCommerce_${NOPVERSION}_NOSource_"
+NOP_DOWNLOADED_BINARIES_ZIP="nopCommerce_${NOPVERSION}_binaries.zip"
+NOP_GITHUB_BINARIES_PREFIX="${NOP_GITHUB_BASE_URL}nopCommerce_${NOPVERSION}_NoSource_"
 NOP_GITHUB_BINARIES_SUFFIX="_x64.zip"
+NOP_PLUGINS_RELATIVE_PATH="nopPlugins/.devcontainer/containers/Nop.Web/bin/Debug/net9.0/"
 
 # Check OS type
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
@@ -128,73 +129,89 @@ else
 fi
 
 
+# Define the download directory explicitly as the nopSetup folder
+DOWNLOAD_DIR="$(cd "$(dirname "$0")/.." && pwd)" # This sets the download directory to the parent folder (nopSetup)
+cd "$DOWNLOAD_DIR" || exit 1
+
 # --- nopSolution Source Download and Setup ---
 # This is the full source of the nopSolution framework (specific version)
 # This is NOT a repo. Use this for reference or plugin development alongside the repos.
 echo "Downloading nopCommerce source zip (v4.80.5)..."
-curl -L -o $NOP_GITHUB_SOURCE_FILE "${NOP_GITHUB_BASE_URL}${NOP_GITHUB_SOURCE_FILE}"
+curl -L -o "$DOWNLOAD_DIR/$NOP_GITHUB_SOURCE_FILE" "${NOP_GITHUB_BASE_URL}${NOP_GITHUB_SOURCE_FILE}"
 echo "nopCommerce source zip downloaded."
 
-# Create the nopSolution directory and unzip the source code into it
-echo "Creating nopSolution directory and unzipping source..."
-mkdir -p nopSolution
-unzip -q nopCommerce_4.80.5_Source.zip -d nopSolution
-echo "nopCommerce source unzipped into nopSolution directory."
+# Create the nopSolution directory inside nopSetup and unzip the source code into it
+echo "Creating nopSetup/nopSolution directory and unzipping source..."
+mkdir -p "$DOWNLOAD_DIR/nopSolution"
+unzip -q "$DOWNLOAD_DIR/$NOP_GITHUB_SOURCE_FILE" -d "$DOWNLOAD_DIR/nopSolution"
+echo "nopCommerce source unzipped into nopSetup/nopSolution directory."
 
 # Remove files at the root of nopSolution, keep subdirectories
-echo "Cleaning up root files in nopSolution..."
-find nopSolution/ -maxdepth 1 -type f -delete
-echo "Removed files at the root of nopSolution, if any."
+echo "Cleaning up root files in nopSetup/nopSolution..."
+find "$DOWNLOAD_DIR/nopSolution/" -maxdepth 1 -type f -delete
+echo "Removed files at the root of nopSetup/nopSolution, if any."
 
 # Remove files at the root of nopSolution/src, keep subdirectories
-echo "Cleaning up root files in nopSolution/src..."
-find nopSolution/src/ -maxdepth 1 -type f -delete
-echo "Removed files at the root of nopSolution/src, if any."
+echo "Cleaning up root files in nopSetup/nopSolution/src..."
+find "$DOWNLOAD_DIR/nopSolution/src/" -maxdepth 1 -type f -delete
+echo "Removed files at the root of nopSetup/nopSolution/src, if any."
 
 # Clean up the downloaded zip file
 echo "Removing downloaded zip file..."
-rm nopCommerce_4.80.5_Source.zip
+rm "$DOWNLOAD_DIR/$NOP_GITHUB_SOURCE_FILE"
 echo "Zip file removed."
 echo "nopSolution source setup complete."
 echo "-----------------------------------------------------" # Added separator
 
-# --- nopPlugins Source Download and Setup ---
-# This is the full source of the nopPlugins framework (specific version)
+# --- nopPlugins Binaries Download and Setup ---
+# These are the official DLLs of this version of the nopCommerce framework
 # This is NOT a repo. Use this for reference alongside the repos.
-# !!! UPDATE THE URL AND VERSION (X.Y.Z) BELOW !!!
-#PLUGIN_VERSION="X.Y.Z" # Replace with actual version
-echo "Downloading nopCommerce Binaries zip"
-
-# Create the nopPlugins directory and unzip the source code into it
-echo "Creating nopPlugins directory and unzipping source..."
-mkdir -p nopPlugins
-NOP_GITHUB_BINARIES_URL="${NOP_GITHUB_BINARIES_PREFIX}${OS_TYPE}_NoSource_${NOP_GITHUB_BINARIES_SUFFIX}"
-curl -L -o $NOP_GITHUB_BINARIES_FILE "${NOP_GITHUB_BINARIES_URL}"
+# !!! UPDATE THE URL AND VERSION (X.Y.Z) at the top of file !!!
+echo "Preparig nopPlugins setup"
+NOP_GITHUB_BINARIES_URL="${NOP_GITHUB_BINARIES_PREFIX}${OS_TYPE}${NOP_GITHUB_BINARIES_SUFFIX}"
+echo "Downloading $NOP_DOWNLOADED_BINARIES_ZIP from: ${NOP_GITHUB_BINARIES_URL}"
+curl -L -o "$DOWNLOAD_DIR/$NOP_DOWNLOADED_BINARIES_ZIP" "${NOP_GITHUB_BINARIES_URL}"
 if [ $? -ne 0 ]; then
     echo "Error downloading nopCommerce binaries zip. Please check the URL and version."
-    # Decide if you want to exit or continue:
-    # exit 1 
+    exit 1
 else 
     echo "nopCommerce binaries zip downloaded successfully."
-fi   
-unzip -q $NOP_GITHUB_BINARIES_FILE -d nopPlugins
-echo "nopPlugins source unzipped into nopPluginS directory."
-
-# Remove files at the root of nopPlugins, keep subdirectories
-echo "Cleaning up root files in nopPlugins..."
-find nopPlugins/ -maxdepth 1 -type f -delete
-echo "Removed files at the root of nopPlugins, if any."
-
-# Remove files at the root of nopPlugins/src, keep subdirectories (if applicable)
-if [ -d "nopPlugins/src" ]; then
-    echo "Cleaning up root files in nopPlugins/src..."
-    find nopPlugins/src/ -maxdepth 1 -type f -delete
-    echo "Removed files at the root of nopPlugins/src, if any."
 fi
+
+# Verify the integrity of the downloaded zip file
+echo "Verifying the integrity of the downloaded zip file..."
+unzip -t $NOP_DOWNLOADED_BINARIES_ZIP > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo "Error: The downloaded zip file is invalid or corrupted. Please check the URL or re-download."
+    rm -f $NOP_DOWNLOADED_BINARIES_ZIP
+    exit 1
+else
+    echo "Zip file integrity verified successfully."
+fi
+# Create the nopPlugins directory and unzip the source code into it
+echo "Creating nopPlugins directory and unzipping source..."
+mkdir -p "$DOWNLOAD_DIR/$NOP_PLUGINS_RELATIVE_PATH"
+
+echo "Unzipping $NOP_DOWNLOADED_BINARIES_ZIP into nopPlugins directory..."
+unzip -q "$DOWNLOAD_DIR/$NOP_DOWNLOADED_BINARIES_ZIP" -d "$DOWNLOAD_DIR/$NOP_PLUGINS_RELATIVE_PATH"
+if [ $? -eq 0 ]; then
+    echo "nopPlugins binaries unzipped into nopPlugins directory."
+
+# # Remove files at the root of nopPlugins, keep subdirectories
+# echo "Cleaning up root files in nopPlugins..."
+# #find nopPlugins/ -maxdepth 1 -type f -delete
+# echo "Removed files at the root of nopPlugins, if any."
+
+# # Remove files at the root of nopPlugins/src, keep subdirectories (if applicable)
+# if [ -d "nopPlugins/src" ]; then
+#     echo "Cleaning up root files in nopPlugins/src..."
+#    # find nopPlugins/src/ -maxdepth 1 -type f -delete
+#     echo "Removed files at the root of nopPlugins/src, if any."
+# fi
 
 # Clean up the downloaded zip file
 echo "Removing downloaded Binaries zip file..."
-rm $NOP_GITHUB_BINARIES_FILE
+rm "$DOWNLOAD_DIR/$NOP_DOWNLOADED_BINARIES_ZIP"
 echo "Binaries zip file removed."
 echo "-----------------------------------------------------" # Added separator
 
