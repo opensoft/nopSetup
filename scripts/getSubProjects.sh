@@ -196,7 +196,10 @@ echo "Unzipping $NOP_DOWNLOADED_BINARIES_ZIP into nopPlugins directory..."
 unzip -q "$DOWNLOAD_DIR/$NOP_DOWNLOADED_BINARIES_ZIP" -d "$DOWNLOAD_DIR/$NOP_PLUGINS_RELATIVE_PATH"
 if [ $? -eq 0 ]; then
     echo "nopPlugins binaries unzipped into nopPlugins directory."
-
+else
+    echo "Error: Failed to unzip nopPlugins binaries."
+    exit 1
+fi
 # Remove files at the root of nopPlugins, keep subdirectories, and exclude .sln files
 echo "Cleaning up root files in nopPlugins, excluding .sln files..."
 find "$DOWNLOAD_DIR/$NOP_PLUGINS_RELATIVE_PATH" -maxdepth 1 -type f ! -name "*.sln" -delete
