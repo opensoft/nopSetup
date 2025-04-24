@@ -45,5 +45,5 @@ services:
             - "1433:1433"  # Expose SQL Server port
 
 networks:
-    nop.com.net:                                  # Updated network name to match changes
+  nop.com.net:                                  # Updated network name to match changes
     driver: bridge

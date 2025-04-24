@@ -6,7 +6,7 @@
         "type": "coreclr",
         "request": "launch",
         "preLaunchTask": "build",
-        "program": "${workspaceFolder}/src/Presentation/Nop.Web/bin/Debug/net8.0/Nop.Web.dll",
+        "program": "${workspaceFolder}/src/Presentation/Nop.Web/bin/Debug/net9.0/Nop.Web.dll",
         "args": [],
         "cwd": "${workspaceFolder}/src/Presentation/Nop.Web",
         "stopAtEntry": false,
@@ -24,4 +24,3 @@
       }
     ]
   }
-  

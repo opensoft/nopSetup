@@ -39,7 +39,7 @@
     }
   },
   "dockerComposeFile": "./docker-compose.yml",
-  "service": "nop.sol.web",
+  "service": "nop.com.web",
   "workspaceFolder": "/workspace", // Updated to include the parent directory of .vscode
   "shutdownAction": "stopCompose",
   "overrideCommand": false, // Added to prevent overriding the container's default command

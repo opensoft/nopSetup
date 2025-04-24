@@ -11,7 +11,7 @@
         "args": [
           "build",
           // Specify the solution file (adjust path if needed)
-          "${workspaceFolder}/NopCommerce.sln",
+          "${workspaceFolder}/src/NopCommerce.sln",
           // Build in Debug configuration by default
           "/property:Configuration=Debug"
         ],
