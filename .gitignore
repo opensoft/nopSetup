@@ -1,3 +1,5 @@
 nopCommerce
+!nopCommerce/.vscode/
+!nopCommerce/.devcontainer
 nopPlugins
 nopSolution
