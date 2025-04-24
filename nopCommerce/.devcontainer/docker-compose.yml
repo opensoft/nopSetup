@@ -1,8 +1,8 @@
-name: nop.sol.Stack
+name: nop-com-stack
 version: "3.7"
 services:
-    nop.sol.web:
-        container_name: nop.sol.web
+    nop.com.web:
+        container_name: nop.com.web
         build:
             context: ..
             dockerfile: ./.devcontainer/containers/Nop.Web/Dockerfile
@@ -20,11 +20,11 @@ services:
         ports:
             - "8080:8080"
         depends_on:
-            nop.sol.mssql:                       # Updated service name to match changes
+            nop.com.mssql:                       # Updated service name to match changes
                 condition: service_started
                 required: true
         networks:
-            - nop.sol.net                        # Removed trailing colon
+            - nop.com.net                        # Removed trailing colon
         volumes:
             - type: bind
               source: ../src
@@ -32,18 +32,18 @@ services:
             - type: bind
               source: ../.devcontainer
               target: /workspace/.devcontainer
-    nop.sol.mssql:                             # Updated service name to match changes
+    nop.com.mssql:                             # Updated service name to match changes
         image: "mcr.microsoft.com/mssql/server:2019-latest"
-        container_name: nop.sol.mssql            # Updated container name to match changes
+        container_name: nop.com.mssql            # Updated container name to match changes
         environment:
             SA_PASSWORD: "${MSSQL_SA_PASSWORD:-YourStrong@Passw0rd}"  # Default password if not set
             ACCEPT_EULA: "Y"
             MSSQL_PID: "Express"
         networks:
-            - nop.sol.net                        # Updated network name to match changes
+            - nop.com.net                        # Updated network name to match changes
         ports:
             - "1433:1433"  # Expose SQL Server port
 
 networks:
-  nop.sol.net:
+    nop.com.net:                                  # Updated network name to match changes
     driver: bridge

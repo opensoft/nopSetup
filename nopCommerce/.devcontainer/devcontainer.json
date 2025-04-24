@@ -1,5 +1,5 @@
 {
-  "name": "nopSoution",
+  "name": "nopCommerce",
   "forwardPorts": [80, 443, 5000, 5001],
   "remoteUser": "${localEnv:USER}", // Dynamically use the host user when attaching to the container
   "customizations": {
