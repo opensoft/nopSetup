@@ -1,0 +1,7 @@
+{
+    "git.terminalAuthentication": false,
+    "github.gitAuthentication": false,
+    "git.useHttpAuthentication": false,
+    "git.remoteProtocol": "ssh"
+}
+
