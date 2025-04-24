@@ -93,6 +93,11 @@ fi
 
 # --- nopCommerce Repository Setup ---
 echo "Setting up nopCommerce repository..."
+# Define the download directory explicitly as the nopSetup folder
+# This needs to be defined *before* we potentially change directories into nopCommerce
+DOWNLOAD_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+TEMP_FOLDER="$DOWNLOAD_DIR/temp_nop_config_backup" # Define temp folder path using the new name
+
 if [ -d "nopCommerce/.git" ]; then
     # Directory exists and is a Git repository
     echo "'nopCommerce' directory exists. Checking out 'develop' and pulling latest changes..."
@@ -103,25 +108,68 @@ if [ -d "nopCommerce/.git" ]; then
     echo "NopCommerce repository updated."
 elif [ -d "nopCommerce" ]; then
     # Directory exists but is not a Git repository
-    echo "Warning: 'nopCommerce' directory exists but is not a valid Git repository. Removing and Cloning."
-    rm -rf nopCommerce # Remove the existing directory
-    # Note: 'git clone' might fail if the directory is not empty.
+    echo "Warning: 'nopCommerce' directory exists but is not a valid Git repository."
+    echo "Backing up .devcontainer and .vscode folders (if they exist)..."
+    rm -rf "$TEMP_FOLDER" # Clean up any previous temp folder
+    mkdir -p "$TEMP_FOLDER"
+    CLONE_FAILED=0 # Flag to track clone status
+
+    if [ -d "nopCommerce/.devcontainer" ]; then
+        echo "Copying .devcontainer to temporary location..."
+        cp -R "nopCommerce/.devcontainer" "$TEMP_FOLDER/"
+    fi
+    if [ -d "nopCommerce/.vscode" ]; then
+        echo "Copying .vscode to temporary location..."
+        cp -R "nopCommerce/.vscode" "$TEMP_FOLDER/"
+    fi
+
+    echo "Removing existing 'nopCommerce' directory..."
+    rm -rf nopCommerce
+
     echo "Cloning nopCommerce repository..."
     git clone git@github.com:opensoft/nopCommerce.git nopCommerce
     if [ $? -ne 0 ]; then
-        echo "Error: Cloning into existing 'nopCommerce' directory failed. It might not be empty."
-        echo "Please manually clean up the 'nopCommerce' directory or remove it and run the script again."
-        exit 1
-    else 
-        cd nopCommerce || exit 1
-        git checkout develop
-        cd .. || exit 1
-        echo "NopCommerce repository cloned successfully."
+        echo "Error: Cloning 'nopCommerce' repository failed."
+        CLONE_FAILED=1 # Set the flag
+        # Do not exit yet, proceed to restore
     fi
+
+    echo "Restoring .devcontainer and .vscode folders..."
+    # Ensure the target directory exists before attempting to copy back, even if clone failed partially
+    mkdir -p nopCommerce
+    if [ -d "$TEMP_FOLDER/.devcontainer" ]; then
+        echo "Restoring .devcontainer..."
+        cp -R "$TEMP_FOLDER/.devcontainer" "nopCommerce/"
+    fi
+    if [ -d "$TEMP_FOLDER/.vscode" ]; then
+        echo "Restoring .vscode..."
+        cp -R "$TEMP_FOLDER/.vscode" "nopCommerce/"
+    fi
+
+    echo "Cleaning up temporary backup directory..."
+    rm -rf "$TEMP_FOLDER"
+    echo "Configuration folders restored."
+
+    # Now check the flag and exit if the clone failed
+    if [ $CLONE_FAILED -eq 1 ]; then
+        echo "Exiting due to git clone failure."
+        exit 1
+    fi
+
+    # If clone succeeded, checkout develop
+    cd nopCommerce || exit 1
+    git checkout develop
+    cd .. || exit 1
+    echo "NopCommerce repository cloned and set to develop branch."
+
 else
     # Directory does not exist
     echo "Cloning nopCommerce repository..."
     git clone git@github.com:opensoft/nopCommerce.git nopCommerce
+    if [ $? -ne 0 ]; then
+        echo "Error: Cloning 'nopCommerce' repository failed."
+        exit 1
+    fi
     cd nopCommerce || exit 1
     git checkout develop
     cd .. || exit 1
@@ -130,7 +178,7 @@ fi
 
 
 # Define the download directory explicitly as the nopSetup folder
-DOWNLOAD_DIR="$(cd "$(dirname "$0")/.." && pwd)" # This sets the download directory to the parent folder (nopSetup)
+# DOWNLOAD_DIR is already defined above, ensure we are in the correct directory before proceeding
 cd "$DOWNLOAD_DIR" || exit 1
 
 # --- nopSolution Source Download and Setup ---
