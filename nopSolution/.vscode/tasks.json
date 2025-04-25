@@ -4,14 +4,14 @@
     "version": "2.0.0",
     "tasks": [
       {
-        // Task to build the entire NopCommerce solution
+        // Task to build the entire nopSolution solution
         "label": "build",
         "command": "dotnet",
         "type": "process",
         "args": [
           "build",
           // Specify the solution file (adjust path if needed)
-          "${workspaceFolder}/src/NopCommerce.sln",
+          "${workspaceFolder}/src/nopSolution.sln",
           // Build in Debug configuration by default
           "/property:Configuration=Debug"
         ],
@@ -21,7 +21,7 @@
           "kind": "build",
           "isDefault": true
         },
-        "detail": "Builds the NopCommerce.sln solution in Debug configuration."
+        "detail": "Builds the nopSolution.sln solution in Debug configuration."
       },
       {
         // Task to build the solution in Release configuration
@@ -30,12 +30,12 @@
         "type": "process",
         "args": [
           "build",
-          "${workspaceFolder}/NopCommerce.sln",
+          "${workspaceFolder}/src/nopSolution.sln",
           "/property:Configuration=Release"
         ],
         "problemMatcher": "$msCompile",
         "group": "build",
-        "detail": "Builds the NopCommerce.sln solution in Release configuration."
+        "detail": "Builds the nopSolution.sln solution in Release configuration."
       },
       {
         // Task to run Nop.Web with hot reload/watch (Recommended for Development)
@@ -75,7 +75,7 @@
         "type": "process",
         "args": [
           "clean",
-          "${workspaceFolder}/NopCommerce.sln",
+          "${workspaceFolder}/src/nopSolution.sln",
           "/property:Configuration=Debug" // Often clean specific config, adjust if needed
         ],
         "problemMatcher": "$msCompile",
@@ -89,7 +89,7 @@
         "type": "process",
         "args": [
           "restore",
-          "${workspaceFolder}/NopCommerce.sln"
+          "${workspaceFolder}/src/nopSolution.sln"
         ],
         "problemMatcher": "$msCompile", // Can catch restore errors
         "detail": "Restores NuGet packages for the entire solution."

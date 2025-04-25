@@ -16,7 +16,7 @@
         },
         "env": {
           "ASPNETCORE_ENVIRONMENT": "Development",
-          "ASPNETCORE_URLS": "http://localhost:5010"
+          "ASPNETCORE_URLS": "http://localhost:5020"
         },
         "sourceFileMap": {
           "/Views": "${workspaceFolder}/src/Presentation/Nop.Web/Views"
