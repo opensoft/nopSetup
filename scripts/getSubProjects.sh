@@ -11,7 +11,7 @@ NOP_GITHUB_SOURCE_FILE="nopCommerce_${NOPVERSION}_Source.zip"
 NOP_DOWNLOADED_BINARIES_ZIP="nopCommerce_${NOPVERSION}_binaries.zip"
 NOP_GITHUB_BINARIES_PREFIX="${NOP_GITHUB_BASE_URL}nopCommerce_${NOPVERSION}_NoSource_"
 NOP_GITHUB_BINARIES_SUFFIX="_x64.zip"
-NOP_PLUGINS_RELATIVE_PATH="nopPlugins/.devcontainer/containers/Nop.Web/bin/Debug/net9.0/"
+NOP_PLUGINS_RELATIVE_PATH="nopPlugins/bin/Debug/net9.0/"
 
 # Check OS type
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
@@ -177,14 +177,22 @@ else
 fi
 
 
-# Define the download directory explicitly as the nopSetup folder
+
+
+
+
+#############################################################
+#                                                           #
+#      --- nopSolution Source Download and Setup ---        #
+#                                                           #
+#############################################################
+
+
 # DOWNLOAD_DIR is already defined above, ensure we are in the correct directory before proceeding
 cd "$DOWNLOAD_DIR" || exit 1
-
-# --- nopSolution Source Download and Setup ---
-# This is the full source of the nopSolution framework (specific version)
-# This is NOT a repo. Use this for reference or plugin development alongside the repos.
-echo "Downloading nopCommerce source zip (v4.80.5)..."
+echo "This is the full source of the nopSolution framework (specific version)"
+echo "This is NOT a repo. Use this for reference or plugin development alongside the repos."
+echo "Downloading nopCommerce source zip $NOPVERSION..."
 curl -L -o "$DOWNLOAD_DIR/$NOP_GITHUB_SOURCE_FILE" "${NOP_GITHUB_BASE_URL}${NOP_GITHUB_SOURCE_FILE}"
 echo "nopCommerce source zip downloaded."
 
@@ -211,7 +219,17 @@ echo "Zip file removed."
 echo "nopSolution source setup complete."
 echo "-----------------------------------------------------" # Added separator
 
-# --- nopPlugins Binaries Download and Setup ---
+
+
+
+
+#############################################################
+#                                                           #
+#      --- nopPlugins Binaries Download and Setup ---       #
+#                                                           #
+#############################################################
+
+
 # These are the official DLLs of this version of the nopCommerce framework
 # This is NOT a repo. Use this for reference alongside the repos.
 # !!! UPDATE THE URL AND VERSION (X.Y.Z) at the top of file !!!
@@ -222,7 +240,7 @@ curl -L -o "$DOWNLOAD_DIR/$NOP_DOWNLOADED_BINARIES_ZIP" "${NOP_GITHUB_BINARIES_U
 if [ $? -ne 0 ]; then
     echo "Error downloading nopCommerce binaries zip. Please check the URL and version."
     exit 1
-else 
+else
     echo "nopCommerce binaries zip downloaded successfully."
 fi
 
@@ -240,7 +258,9 @@ fi
 echo "Creating nopPlugins directory and unzipping source..."
 mkdir -p "$DOWNLOAD_DIR/$NOP_PLUGINS_RELATIVE_PATH"
 
-echo "Unzipping $NOP_DOWNLOADED_BINARIES_ZIP into nopPlugins directory..."
+echo "Unzipping $NOP_DOWNLOADED_BINARIES_ZIP "
+echo "into nopPlugins directory at $DOWNLOAD_DIR/$NOP_PLUGINS_RELATIVE_PATH"
+# Unzip the downloaded binaries into the nopPlugins directory
 unzip -q "$DOWNLOAD_DIR/$NOP_DOWNLOADED_BINARIES_ZIP" -d "$DOWNLOAD_DIR/$NOP_PLUGINS_RELATIVE_PATH"
 if [ $? -eq 0 ]; then
     echo "nopPlugins binaries unzipped into nopPlugins directory."
@@ -275,7 +295,7 @@ echo " - nopCommerce repository cloned into 'nopCommerce/'"
 echo " - nopPlugins repository cloned into 'nopPlugins/'" # This line seems incorrect based on the script logic, nopPlugins repo isn't cloned here. Consider removing or correcting.
 echo " - nopCommerce v4.80.5 source extracted into 'nopSolution/' (cleaned)"
 echo " - nopCommerce v4.80.5 binaries extracted into 'nopPlugins Container/' (cleaned)" # Added this line for clarity
- 
+
 echo "-----------------------------------------------------"
 
 

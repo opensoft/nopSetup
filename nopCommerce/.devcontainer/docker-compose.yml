@@ -4,8 +4,8 @@ services:
     nop.com.web:
         container_name: nop.com.web
         build:
-            context: ..
-            dockerfile: ./.devcontainer/containers/Nop.Web/Dockerfile
+            context: ../..
+            dockerfile: ./containers/devcontainers/Nop.Web/Dockerfile
             args:
                 IDE_USER: "${USER:-defaultuser}"  # Default to 'defaultuser' if USER is not set
                 IDE_UID: ${USERID:-1000}         # Default to '1000' if USERID is not set

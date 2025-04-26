@@ -9,7 +9,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # --- Run additional setup scripts ---
 
 # Run getSubProjects script
-GET_SUB_PROJECTS_SCRIPT="$SCRIPT_DIR/scripts/getSubProjects.sh" # Assuming location relative to setup.sh
+GET_SUB_PROJECTS_SCRIPT="$SCRIPT_DIR/getSubProjects.sh" # Assuming location relative to setup.sh
 if [ -f "$GET_SUB_PROJECTS_SCRIPT" ]; then
     echo "Running setup script: $GET_SUB_PROJECTS_SCRIPT"
     bash "$GET_SUB_PROJECTS_SCRIPT"
@@ -23,7 +23,7 @@ else
 fi
 
 # Run addClone2Shell script
-ADD_CLONE_SCRIPT="$SCRIPT_DIR/scripts/addClone2Shell.sh" # Corrected path and added missing quote
+ADD_CLONE_SCRIPT="$SCRIPT_DIR/../containers/.devcontainer/containers/Nop.Web/scripts/addClone2Shell.sh" # Corrected path and added missing quote
 if [ -f "$ADD_CLONE_SCRIPT" ]; then
     echo "Running additional setup script: $ADD_CLONE_SCRIPT"
     bash "$ADD_CLONE_SCRIPT"

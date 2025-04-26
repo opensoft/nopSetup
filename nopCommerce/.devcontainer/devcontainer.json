@@ -6,34 +6,38 @@
     "vscode": {
       "extensions": [
         "ms-dotnettools.csdevkit", // C# Dev Kit
-        "ms-dotnettools.csharp", // Core C# support (required by Dev Kit)
-        "ms-vscode.vscode-node-debug2",
-        "fernandoescolar.vscode-solution-explorer",
+        //"ms-dotnettools.csharp", // Core C# support (required by Dev Kit)
+        //"ms-vscode.vscode-node-debug2",
+        //"fernandoescolar.vscode-solution-explorer",
+        //"spencer-farley.ionide-and-vscode-solution-explorer",
         //"jchannon.csharpextensions",
         //"dotnetcoretutorials.razor-plus",
-        "esbenp.prettier-vscode",
-        "ms-mssql.mssql",
-        "ms-dotnettools.csharp", // Added Core C# support (required by Dev Kit)
+        //"esbenp.prettier-vscode",
+        //"ms-mssql.mssql",
+        //"ms-dotnettools.csharp", // Added Core C# support (required by Dev Kit)
         //"humao.rest-client",
-        "ms-azuretools.vscode-docker",
-        "eamodio.gitlens",
-        "streetsidesoftware.code-spell-checker",
-        "vscode-icons-team.vscode-icons",
-        "visualstudioexptteam.vscodeintellicode",
-        "ms-vscode.js-debug-chrome", // Or ms-vscode.js-debug-edge depending on your browser.
+        //"ms-azuretools.vscode-docker",
+        //"eamodio.gitlens",
+        //"streetsidesoftware.code-spell-checker",
+        //"vscode-icons-team.vscode-icons",
+        //"visualstudioexptteam.vscodeintellicode",
+        //"ms-vscode.js-debug-chrome", // Or ms-vscode.js-debug-edge depending on your browser.
         //"ritwickdey.LiveServer",
-        "dbaeumer.vscode-eslint", //Javascript linter.
-        "ms-vscode.live-server",
+        //"dbaeumer.vscode-eslint", //Javascript linter.
+        //"ms-vscode.live-server",
         //"grapecity.gc-excelviewer",
-        "mtxr.sqltools"
+        //"mtxr.sqltools"
       ],
       "settings": {
         "terminal.integrated.profiles.linux": {
           "nopCommerce bash": {
             "path": "/bin/bash"
+          },
+          "nopCommerce zsh": {
+            "path": "/bin/zsh"
           }
         },
-        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.defaultProfile.linux": "zsh",
         "debug.node.autoAttach": "disabled"
       }
     }
@@ -43,12 +47,11 @@
   "workspaceFolder": "/workspace", // Updated to include the parent directory of .vscode
   "shutdownAction": "stopCompose",
   "overrideCommand": false, // Added to prevent overriding the container's default command
-  "postStartCommand": "chmod +x /workspace/.devcontainer/containers/Nop.Web/entrypoint.sh && /workspace/.devcontainer/containers/Nop.Web/entrypoint.sh", // Run script on start
   "mounts": [
     "source=${localEnv:HOME}/.ssh,target=/home/${localEnv:USER}/.ssh,type=bind,consistency=cached", // Dynamically use the host user
+    "source=${localWorkspaceFolder}/../sites,target=/workspace/sites,type=bind,consistency=cached",
     "source=${localWorkspaceFolder}/src,target=/workspace/src,type=bind,consistency=cached",
-    "source=${localWorkspaceFolder}/.vscode,target=/workspace/.vscode,type=bind,consistency=cached", // Adjusted target path
-    "source=${localWorkspaceFolder}/.devcontainer,target=/workspace/.devcontainer,type=bind,consistency=cached",
-    "source=${localWorkspaceFolder}/../scripts,target=/workspace/.devcontainer/containers/Nop.Web/scripts,type=bind,consistency=cached"
+    "source=${localWorkspaceFolder}/../.vscode,target=/workspace/.vscode,type=bind,consistency=cached", // Adjusted target path
+    //"source=${localWorkspaceFolder}/../containers/.devcontainer/containers,target=/workspace/.devcontainer/containers,type=bind,consistency=cached"
   ]
 }

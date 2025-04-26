@@ -1,5 +1,5 @@
 services:
-  nop.sol.web:
+  nop.plg.web:
     build:
       args:
         DEBUG: "${DEBUG:-true}"  # Allow overriding DEBUG from environment

@@ -101,6 +101,22 @@ RUN if [ "$DEBUG" = "true" ]; then \
         ls -l; \
     fi
 
+# set owner of the workspace directory to the IDE_USER
+RUN set -eux && \
+    echo "Fixing ownership and permissions for /workspace..." && \
+    chown -R ${IDE_USER}:${IDE_USER} /workspace && \
+    if [ $? -eq 0 ]; then \
+        echo "Ownership successfully changed for /workspace to ${IDE_USER}:${IDE_USER}"; \
+    else \
+        echo "Failed to change ownership for /workspace"; \
+    fi && \
+    chmod -R u+rw /workspace
+
+# Setup Clone Script to run from usr/local/bin
+COPY ./scripts/clone /usr/local/bin/clone
+RUN chmod 755 /usr/local/bin/clone
+
+
 ###############################################################################
 #                                                                             #
 #      If you want docker to build NopCommerce, uncomment the lines below     #
