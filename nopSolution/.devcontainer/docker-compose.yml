@@ -25,13 +25,13 @@ services:
                 required: true
         networks:
             - nop.sol.net                        # Removed trailing colon
-        volumes:
-            - type: bind
-              source: ../src
-              target: /workspace/src
-            - type: bind
-              source: ../.devcontainer
-              target: /workspace/.devcontainer
+        # volumes:
+        #     - type: bind
+        #       source: ../src
+        #       target: /workspace/src
+        #     - type: bind
+        #       source: ../.devcontainer
+        #       target: /workspace/.devcontainer
     nop.sol.mssql:                             # Updated service name to match changes
         image: "mcr.microsoft.com/mssql/server:2019-latest"
         container_name: nop.sol.mssql            # Updated container name to match changes
@@ -42,7 +42,7 @@ services:
         networks:
             - nop.sol.net                        # Updated network name to match changes
         ports:
-            - "1433:1433"  # Expose SQL Server port
+            - "1443:1443"  # Expose SQL Server port
 
 networks:
   nop.sol.net:

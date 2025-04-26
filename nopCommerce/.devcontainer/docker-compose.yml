@@ -25,13 +25,13 @@ services:
                 required: true
         networks:
             - nop.com.net                        # Removed trailing colon
-        volumes:
-            - type: bind
-              source: ../src
-              target: /workspace/src
-            - type: bind
-              source: ../.devcontainer
-              target: /workspace/.devcontainer
+        # volumes:
+        #     - type: bind
+        #       source: ../src
+        #       target: /workspace/src
+        #     - type: bind
+        #       source: ../.devcontainer
+        #       target: /workspace/.devcontainer
     nop.com.mssql:                             # Updated service name to match changes
         image: "mcr.microsoft.com/mssql/server:2019-latest"
         container_name: nop.com.mssql            # Updated container name to match changes
