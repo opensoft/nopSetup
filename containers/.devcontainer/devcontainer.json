@@ -1,5 +1,5 @@
 {
-  "name": "nopSoution",
+  "name": "nopSolution",
   "forwardPorts": [80, 443, 5000, 5001],
   "remoteUser": "${localEnv:USER}", // Dynamically use the host user when attaching to the container
   "customizations": {
@@ -43,10 +43,12 @@
   "workspaceFolder": "/workspace", // Updated to include the parent directory of .vscode
   "shutdownAction": "stopCompose",
   "overrideCommand": false, // Added to prevent overriding the container's default command
+  "postStartCommand": "chmod +x /workspace/.devcontainer/containers/Nop.Web/entrypoint.sh && /workspace/.devcontainer/containers/Nop.Web/entrypoint.sh", // Run script on start
   "mounts": [
     "source=${localEnv:HOME}/.ssh,target=/home/${localEnv:USER}/.ssh,type=bind,consistency=cached", // Dynamically use the host user
     "source=${localWorkspaceFolder}/src,target=/workspace/src,type=bind,consistency=cached",
     "source=${localWorkspaceFolder}/.vscode,target=/workspace/.vscode,type=bind,consistency=cached", // Adjusted target path
+    "source=${localWorkspaceFolder}/.devcontainer,target=/workspace/.devcontainer,type=bind,consistency=cached",
     "source=${localWorkspaceFolder}/../scripts,target=/workspace/.devcontainer/containers/Nop.Web/scripts,type=bind,consistency=cached"
   ]
 }
