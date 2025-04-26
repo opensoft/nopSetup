@@ -52,7 +52,7 @@
 		}
 	  }
 	},
-	"dockerComposeFile": "./containers/docker-compose.yml",
+	"dockerComposeFile": "./docker-compose.yml",
 	"service": "nop.plg.web",
 	"workspaceFolder": "/workspace",
 	"shutdownAction": "stopCompose",

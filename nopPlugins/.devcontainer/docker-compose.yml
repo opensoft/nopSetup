@@ -1,7 +1,7 @@
 name: nop-plugins-stack
 version: "3.7"
 services:
-    nop.com.web:
+    nop.plg.web:
         container_name: nop.plg.web
         build:
             context: ../..
@@ -20,7 +20,7 @@ services:
         ports:
             - "8080:8080"
         depends_on:
-            nop.com.mssql:                       # Updated service name to match changes
+            nop.plg.mssql:                       # Updated service name to match changes
                 condition: service_started
                 required: true
         networks:

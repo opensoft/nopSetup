@@ -98,138 +98,138 @@ fi
 
 
 
-# #############################################################
-# #                                                           #
-# #      --- nopSolution Source Download and Setup ---        #
-# #                                                           #
-# #############################################################
+#############################################################
+#                                                           #
+#      --- nopSolution Source Download and Setup ---        #
+#                                                           #
+#############################################################
 
-# echo "Setting up nopCommerce repository..."
-# # Define the download directory explicitly as the nopSetup folder
-# # This needs to be defined *before* we potentially change directories into nopCommerce
-# DOWNLOAD_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-# TEMP_FOLDER="$DOWNLOAD_DIR/temp_nop_config_backup" # Define temp folder path using the new name
+echo "Setting up nopCommerce repository..."
+# Define the download directory explicitly as the nopSetup folder
+# This needs to be defined *before* we potentially change directories into nopCommerce
+DOWNLOAD_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+TEMP_FOLDER="$DOWNLOAD_DIR/temp_nop_config_backup" # Define temp folder path using the new name
 
-# if [ -d "nopCommerce/.git" ]; then
-#     # Directory exists and is a Git repository
-#     echo "'nopCommerce' directory exists. Checking out 'develop' and pulling latest changes..."
-#     cd nopCommerce || exit 1
-#     git checkout develop
-#     git pull origin develop # Assuming 'origin' is the remote name
-#     cd .. || exit 1
-#     echo "NopCommerce repository updated."
-# elif [ -d "nopCommerce" ]; then
-#     # Directory exists but is not a Git repository
-#     echo "Warning: 'nopCommerce' directory exists but is not a valid Git repository."
-#     echo "Backing up .devcontainer and .vscode folders (if they exist)..."
-#     rm -rf "$TEMP_FOLDER" # Clean up any previous temp folder
-#     mkdir -p "$TEMP_FOLDER"
-#     CLONE_FAILED=0 # Flag to track clone status
+if [ -d "nopCommerce/.git" ]; then
+    # Directory exists and is a Git repository
+    echo "'nopCommerce' directory exists. Checking out 'develop' and pulling latest changes..."
+    cd nopCommerce || exit 1
+    git checkout develop
+    git pull origin develop # Assuming 'origin' is the remote name
+    cd .. || exit 1
+    echo "NopCommerce repository updated."
+elif [ -d "nopCommerce" ]; then
+    # Directory exists but is not a Git repository
+    echo "Warning: 'nopCommerce' directory exists but is not a valid Git repository."
+    echo "Backing up .devcontainer and .vscode folders (if they exist)..."
+    rm -rf "$TEMP_FOLDER" # Clean up any previous temp folder
+    mkdir -p "$TEMP_FOLDER"
+    CLONE_FAILED=0 # Flag to track clone status
 
-#     if [ -d "nopCommerce/.devcontainer" ]; then
-#         echo "Copying .devcontainer to temporary location..."
-#         cp -R "nopCommerce/.devcontainer" "$TEMP_FOLDER/"
-#     fi
-#     if [ -d "nopCommerce/.vscode" ]; then
-#         echo "Copying .vscode to temporary location..."
-#         cp -R "nopCommerce/.vscode" "$TEMP_FOLDER/"
-#     fi
+    if [ -d "nopCommerce/.devcontainer" ]; then
+        echo "Copying .devcontainer to temporary location..."
+        cp -R "nopCommerce/.devcontainer" "$TEMP_FOLDER/"
+    fi
+    if [ -d "nopCommerce/.vscode" ]; then
+        echo "Copying .vscode to temporary location..."
+        cp -R "nopCommerce/.vscode" "$TEMP_FOLDER/"
+    fi
 
-#     echo "Removing existing 'nopCommerce' directory..."
-#     rm -rf nopCommerce
+    echo "Removing existing 'nopCommerce' directory..."
+    rm -rf nopCommerce
 
-#     echo "Cloning nopCommerce repository..."
-#     git clone git@github.com:opensoft/nopCommerce.git nopCommerce
-#     if [ $? -ne 0 ]; then
-#         echo "Error: Cloning 'nopCommerce' repository failed."
-#         CLONE_FAILED=1 # Set the flag
-#         # Do not exit yet, proceed to restore
-#     fi
+    echo "Cloning nopCommerce repository..."
+    git clone git@github.com:opensoft/nopCommerce.git nopCommerce
+    if [ $? -ne 0 ]; then
+        echo "Error: Cloning 'nopCommerce' repository failed."
+        CLONE_FAILED=1 # Set the flag
+        # Do not exit yet, proceed to restore
+    fi
 
-#     echo "Restoring .devcontainer and .vscode folders..."
-#     # Ensure the target directory exists before attempting to copy back, even if clone failed partially
-#     mkdir -p nopCommerce
-#     if [ -d "$TEMP_FOLDER/.devcontainer" ]; then
-#         echo "Restoring .devcontainer..."
-#         cp -R "$TEMP_FOLDER/.devcontainer" "nopCommerce/"
-#     fi
-#     if [ -d "$TEMP_FOLDER/.vscode" ]; then
-#         echo "Restoring .vscode..."
-#         cp -R "$TEMP_FOLDER/.vscode" "nopCommerce/"
-#     fi
+    echo "Restoring .devcontainer and .vscode folders..."
+    # Ensure the target directory exists before attempting to copy back, even if clone failed partially
+    mkdir -p nopCommerce
+    if [ -d "$TEMP_FOLDER/.devcontainer" ]; then
+        echo "Restoring .devcontainer..."
+        cp -R "$TEMP_FOLDER/.devcontainer" "nopCommerce/"
+    fi
+    if [ -d "$TEMP_FOLDER/.vscode" ]; then
+        echo "Restoring .vscode..."
+        cp -R "$TEMP_FOLDER/.vscode" "nopCommerce/"
+    fi
 
-#     echo "Cleaning up temporary backup directory..."
-#     rm -rf "$TEMP_FOLDER"
-#     echo "Configuration folders restored."
+    echo "Cleaning up temporary backup directory..."
+    rm -rf "$TEMP_FOLDER"
+    echo "Configuration folders restored."
 
-#     # Now check the flag and exit if the clone failed
-#     if [ $CLONE_FAILED -eq 1 ]; then
-#         echo "Exiting due to git clone failure."
-#         exit 1
-#     fi
+    # Now check the flag and exit if the clone failed
+    if [ $CLONE_FAILED -eq 1 ]; then
+        echo "Exiting due to git clone failure."
+        exit 1
+    fi
 
-#     # If clone succeeded, checkout develop
-#     cd nopCommerce || exit 1
-#     git checkout develop
-#     cd .. || exit 1
-#     echo "NopCommerce repository cloned and set to develop branch."
+    # If clone succeeded, checkout develop
+    cd nopCommerce || exit 1
+    git checkout develop
+    cd .. || exit 1
+    echo "NopCommerce repository cloned and set to develop branch."
 
-# else
-#     # Directory does not exist
-#     echo "Cloning nopCommerce repository..."
-#     git clone git@github.com:opensoft/nopCommerce.git nopCommerce
-#     if [ $? -ne 0 ]; then
-#         echo "Error: Cloning 'nopCommerce' repository failed."
-#         exit 1
-#     fi
-#     cd nopCommerce || exit 1
-#     git checkout develop
-#     cd .. || exit 1
-#     echo "NopCommerce repository cloned successfully."
-# fi
-
-
+else
+    # Directory does not exist
+    echo "Cloning nopCommerce repository..."
+    git clone git@github.com:opensoft/nopCommerce.git nopCommerce
+    if [ $? -ne 0 ]; then
+        echo "Error: Cloning 'nopCommerce' repository failed."
+        exit 1
+    fi
+    cd nopCommerce || exit 1
+    git checkout develop
+    cd .. || exit 1
+    echo "NopCommerce repository cloned successfully."
+fi
 
 
 
 
-# #############################################################
-# #                                                           #
-# #      --- nopSolution Source Download and Setup ---        #
-# #                                                           #
-# #############################################################
 
 
-# # DOWNLOAD_DIR is already defined above, ensure we are in the correct directory before proceeding
-# cd "$DOWNLOAD_DIR" || exit 1
-# echo "This is the full source of the nopSolution framework (specific version)"
-# echo "This is NOT a repo. Use this for reference or plugin development alongside the repos."
-# echo "Downloading nopCommerce source zip $NOPVERSION..."
-# curl -L -o "$DOWNLOAD_DIR/$NOP_GITHUB_SOURCE_FILE" "${NOP_GITHUB_BASE_URL}${NOP_GITHUB_SOURCE_FILE}"
-# echo "nopCommerce source zip downloaded."
+#############################################################
+#                                                           #
+#      --- nopSolution Source Download and Setup ---        #
+#                                                           #
+#############################################################
 
-# # Create the nopSolution directory inside nopSetup and unzip the source code into it
-# echo "Creating nopSetup/nopSolution directory and unzipping source..."
-# mkdir -p "$DOWNLOAD_DIR/nopSolution"
-# unzip -q "$DOWNLOAD_DIR/$NOP_GITHUB_SOURCE_FILE" -d "$DOWNLOAD_DIR/nopSolution"
-# echo "nopCommerce source unzipped into nopSetup/nopSolution directory."
 
-# # Remove files at the root of nopSolution, keep subdirectories
-# echo "Cleaning up root files in nopSetup/nopSolution..."
-# find "$DOWNLOAD_DIR/nopSolution/" -maxdepth 1 -type f -delete
-# echo "Removed files at the root of nopSetup/nopSolution, if any."
+# DOWNLOAD_DIR is already defined above, ensure we are in the correct directory before proceeding
+cd "$DOWNLOAD_DIR" || exit 1
+echo "This is the full source of the nopSolution framework (specific version)"
+echo "This is NOT a repo. Use this for reference or plugin development alongside the repos."
+echo "Downloading nopCommerce source zip $NOPVERSION..."
+curl -L -o "$DOWNLOAD_DIR/$NOP_GITHUB_SOURCE_FILE" "${NOP_GITHUB_BASE_URL}${NOP_GITHUB_SOURCE_FILE}"
+echo "nopCommerce source zip downloaded."
 
-# # # Remove files at the root of nopSolution/src, keep subdirectories
-# # echo "Cleaning up root files in nopSetup/nopSolution/src..."
-# # find "$DOWNLOAD_DIR/nopSolution/src/" -maxdepth 1 -type f -delete
-# # echo "Removed files at the root of nopSetup/nopSolution/src, if any."
+# Create the nopSolution directory inside nopSetup and unzip the source code into it
+echo "Creating nopSetup/nopSolution directory and unzipping source..."
+mkdir -p "$DOWNLOAD_DIR/nopSolution"
+unzip -q "$DOWNLOAD_DIR/$NOP_GITHUB_SOURCE_FILE" -d "$DOWNLOAD_DIR/nopSolution"
+echo "nopCommerce source unzipped into nopSetup/nopSolution directory."
 
-# # Clean up the downloaded zip file
-# echo "Removing downloaded zip file..."
-# rm "$DOWNLOAD_DIR/$NOP_GITHUB_SOURCE_FILE"
-# echo "Zip file removed."
-# echo "nopSolution source setup complete."
-# echo "-----------------------------------------------------" # Added separator
+# Remove files at the root of nopSolution, keep subdirectories
+echo "Cleaning up root files in nopSetup/nopSolution..."
+find "$DOWNLOAD_DIR/nopSolution/" -maxdepth 1 -type f -delete
+echo "Removed files at the root of nopSetup/nopSolution, if any."
+
+# # Remove files at the root of nopSolution/src, keep subdirectories
+# echo "Cleaning up root files in nopSetup/nopSolution/src..."
+# find "$DOWNLOAD_DIR/nopSolution/src/" -maxdepth 1 -type f -delete
+# echo "Removed files at the root of nopSetup/nopSolution/src, if any."
+
+# Clean up the downloaded zip file
+echo "Removing downloaded zip file..."
+rm "$DOWNLOAD_DIR/$NOP_GITHUB_SOURCE_FILE"
+echo "Zip file removed."
+echo "nopSolution source setup complete."
+echo "-----------------------------------------------------" # Added separator
 
 
 
