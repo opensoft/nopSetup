@@ -1,6 +1,6 @@
 {
 	"name": "nopPlugins",
-	
+
 	"containerEnv": {
 		// Option A: Indicate the type/purpose
 		"DEV_CONTAINER_FRAMEWORK": "NOPCOMMERCE",
@@ -53,14 +53,14 @@
 	  }
 	},
 	"dockerComposeFile": "./containers/docker-compose.yml",
-	"service": "nop.dev.web",
-	"workspaceFolder": "/workspace", 
+	"service": "nop.plg.web",
+	"workspaceFolder": "/workspace",
 	"shutdownAction": "stopCompose",
 	"overrideCommand": false, // Added to prevent overriding the container's default command
 	"mounts": [
-	  "source=${localEnv:HOME}/.ssh,target=/home/${localEnv:USER}/.ssh,type=bind,consistency=cached", // Dynamically use the host user
-	  "source=${localWorkspaceFolder}/,target=/workspace,type=bind,consistency=cached",
-	  "source=${localWorkspaceFolder}/../scripts,target=/workspace/.devcontainer/containers/Nop.Web/scripts,type=bind,consistency=cached" //mount after /workspace
+        "source=${localEnv:HOME}/.ssh,target=/home/${localEnv:USER}/.ssh,type=bind,consistency=cached", // Dynamically use the host user
+        "source=${localWorkspaceFolder}/../sites,target=/workspace/sites,type=bind,consistency=cached",
+        "source=${localWorkspaceFolder}/../.vscode,target=/workspace/.vscode,type=bind,consistency=cached", // Adjusted target path
+        "source=${localWorkspaceFolder}/src,target=/workspace/src,type=bind,consistency=cached"
 	]
   }
-  
