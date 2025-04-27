@@ -13,3 +13,4 @@ nopSolution/*
 !nopSolution/.vscode/**/*
 !nopSolution/.devcontainer/
 !nopSolution/.devcontainer/**/*
+nopPlugins/src/Plugins/Nop.Plugin.Opensoft.SEO/
