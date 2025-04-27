@@ -51,7 +51,6 @@
     "source=${localEnv:HOME}/.ssh,target=/home/${localEnv:USER}/.ssh,type=bind,consistency=cached", // Dynamically use the host user
     "source=${localWorkspaceFolder}/../sites,target=/workspace/sites,type=bind,consistency=cached",
     "source=${localWorkspaceFolder}/src,target=/workspace/src,type=bind,consistency=cached",
-    "source=${localWorkspaceFolder}/../.vscode,target=/workspace/.vscode,type=bind,consistency=cached", // Adjusted target path
-    //"source=${localWorkspaceFolder}/../containers/.devcontainer/containers,target=/workspace/.devcontainer/containers,type=bind,consistency=cached"
+    "source=${localWorkspaceFolder}/../.vscode,target=/workspace/.vscode,type=bind,consistency=cached" // Adjusted target path
   ]
 }
