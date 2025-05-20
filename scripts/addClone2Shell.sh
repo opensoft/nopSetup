@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/bash
 
 # Get the directory where this script (and the 'clone' script) is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -78,8 +78,10 @@ if [ "$SYSTEM_INSTALL_DONE" = false ]; then
         echo "Warning: Could not find .bashrc, .zshrc, or .profile."
         echo "Cannot automatically add $SCRIPT_DIR to PATH."
         echo "You may need to add it manually or ensure one of these files exists."
+        # *** Ensure we don't proceed if SHELL_PROFILE is empty ***
     else
         # Proceed with checking and modifying the found SHELL_PROFILE
+        echo "Using profile: $SHELL_PROFILE" # Added for clarity
         # Check if the exact line or the directory is already in PATH definition
         if ! grep -qF -- "$EXPORT_LINE" "$SHELL_PROFILE" && ! grep -q "PATH=.*$SCRIPT_DIR" "$SHELL_PROFILE"; then
             echo "Adding $SCRIPT_DIR to PATH in $SHELL_PROFILE"

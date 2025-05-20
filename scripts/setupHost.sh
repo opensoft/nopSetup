@@ -23,7 +23,7 @@ else
 fi
 
 # Run addClone2Shell script
-ADD_CLONE_SCRIPT="$SCRIPT_DIR/../containers/.devcontainer/containers/Nop.Web/scripts/addClone2Shell.sh" # Corrected path and added missing quote
+ADD_CLONE_SCRIPT="$SCRIPT_DIR/addClone2Shell.sh" # Corrected path and added missing quote
 if [ -f "$ADD_CLONE_SCRIPT" ]; then
     echo "Running additional setup script: $ADD_CLONE_SCRIPT"
     bash "$ADD_CLONE_SCRIPT"
