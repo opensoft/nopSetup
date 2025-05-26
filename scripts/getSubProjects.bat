@@ -9,10 +9,10 @@ set NOP_GITHUB_BINARIES_SUFFIX=_x64.zip
 set NOP_PLUGINS_RELATIVE_PATH=nopPlugins\bin\Debug\net9.0\
 set DOWNLOAD_DIR=%~dp0..
 
-REM Check if unzip is available
-where unzip >nul 2>nul
+REM Check if tar is available
+where tar >nul 2>nul
 if %errorlevel% neq 0 (
-    echo "Error: 'unzip' command not found. Please install it and ensure it's in your PATH."
+    echo "Error: 'tar' command not found. Please install it and ensure it's in your PATH."
     exit /b 1
 )
 
@@ -47,8 +47,8 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 echo "Extracting nopCommerce source..."
-mkdir "%DOWNLOAD_DIR%\nopSolution"
-unzip -q "%DOWNLOAD_DIR%\%NOP_GITHUB_SOURCE_FILE%" -d "%DOWNLOAD_DIR%\nopSolution"
+if not exist "%DOWNLOAD_DIR%\nopSolution" mkdir "%DOWNLOAD_DIR%\nopSolution"
+tar -xf "%DOWNLOAD_DIR%\%NOP_GITHUB_SOURCE_FILE%" -C "%DOWNLOAD_DIR%\nopSolution"
 if %errorlevel% neq 0 (
     echo "Error: Failed to extract nopCommerce source."
     exit /b 1
@@ -65,8 +65,14 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 echo "Extracting nopCommerce binaries..."
-mkdir "%DOWNLOAD_DIR%\%NOP_PLUGINS_RELATIVE_PATH%"
-unzip -q "%DOWNLOAD_DIR%\%NOP_DOWNLOADED_BINARIES_ZIP%" -d "%DOWNLOAD_DIR%\%NOP_PLUGINS_RELATIVE_PATH%"
+if not exist "%DOWNLOAD_DIR%\nopPlugins" md "%DOWNLOAD_DIR%\nopPlugins"
+if not exist "%DOWNLOAD_DIR%\nopPlugins\bin" md "%DOWNLOAD_DIR%\nopPlugins\bin"
+if not exist "%DOWNLOAD_DIR%\nopPlugins\bin\Debug" md "%DOWNLOAD_DIR%\nopPlugins\bin\Debug"
+if not exist "%DOWNLOAD_DIR%\nopPlugins\bin\Debug\net9.0" md "%DOWNLOAD_DIR%\nopPlugins\bin\Debug\net9.0"
+pushd "%DOWNLOAD_DIR%\%NOP_PLUGINS_RELATIVE_PATH%"
+set EXTRACT_DIR=%CD%
+popd
+tar -xf "%DOWNLOAD_DIR%\%NOP_DOWNLOADED_BINARIES_ZIP%" -C "%EXTRACT_DIR%"
 if %errorlevel% neq 0 (
     echo "Error: Failed to extract nopCommerce binaries."
     exit /b 1

@@ -8,7 +8,7 @@ REM Run getSubProjects script
 set GET_SUB_PROJECTS_SCRIPT=%SCRIPT_DIR%getSubProjects.bat
 if exist "%GET_SUB_PROJECTS_SCRIPT%" (
     echo Running setup script: %GET_SUB_PROJECTS_SCRIPT%
-    bash "%GET_SUB_PROJECTS_SCRIPT%"
+    call "%GET_SUB_PROJECTS_SCRIPT%"
     if %ERRORLEVEL% neq 0 (
         echo Warning: %GET_SUB_PROJECTS_SCRIPT% finished with errors.
     ) else (
@@ -19,10 +19,10 @@ if exist "%GET_SUB_PROJECTS_SCRIPT%" (
 )
 
 REM Run addClone2Shell script
-set ADD_CLONE_SCRIPT=%SCRIPT_DIR%..\containers\.devcontainer\containers\Nop.Web\scripts\addClone2Shell.bat
+set ADD_CLONE_SCRIPT=%SCRIPT_DIR%addClone2Shell.bat
 if exist "%ADD_CLONE_SCRIPT%" (
     echo Running additional setup script: %ADD_CLONE_SCRIPT%
-    bash "%ADD_CLONE_SCRIPT%"
+    call "%ADD_CLONE_SCRIPT%"
     if %ERRORLEVEL% neq 0 (
         echo Warning: %ADD_CLONE_SCRIPT% finished with errors.
     ) else (
