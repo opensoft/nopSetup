@@ -91,19 +91,14 @@ if %SOLUTION_COUNT%==1 (
     goto solution_selected
 )
 
-REM Multiple solutions - show selection menu
+REM Multiple solutions - show enhanced selection menu
+echo.
 echo Multiple solution files found:
-set INDEX=1
-for %%s in (%SOLUTION_LIST%) do (
-    echo !INDEX!. %%~s
-    set /a INDEX+=1
-)
+echo ================================
+call :display_solution_choices
+echo.
 set /p CHOICE=Please choose a solution file (1-%SOLUTION_COUNT%):
-set INDEX=1
-for %%s in (%SOLUTION_LIST%) do (
-    if !INDEX!==!CHOICE! set CHOSEN_SOLUTION=%%~s
-    set /a INDEX+=1
-)
+call :validate_and_set_choice
 
 :solution_selected
 if "%CHOSEN_SOLUTION%"=="" (
@@ -223,4 +218,128 @@ set /a NEXT_DEPTH=%DEPTH%+1
 for /d %%d in ("%SEARCH_PATH%\*") do (
     call :search_down "%%d" %NEXT_DEPTH%
 )
+goto :eof
+
+REM Function to display solution choices with highlighted differences
+:display_solution_choices
+setlocal enabledelayedexpansion
+
+REM Find common base path
+call :find_common_base_path
+
+REM Display solutions with highlighting
+set INDEX=1
+for %%s in (%SOLUTION_LIST%) do (
+    call :display_solution_option "%%~s" !INDEX!
+    set /a INDEX+=1
+)
+goto :eof
+
+REM Function to find common base path among all solutions
+:find_common_base_path
+setlocal enabledelayedexpansion
+set COMMON_BASE=
+set FIRST_SOLUTION=
+
+REM Get first solution as reference
+for %%s in (%SOLUTION_LIST%) do (
+    if "!FIRST_SOLUTION!"=="" set FIRST_SOLUTION=%%~s
+)
+
+REM Extract directory of first solution
+for %%f in ("!FIRST_SOLUTION!") do set FIRST_DIR=%%~dpf
+
+REM Find common path by comparing with other solutions
+set TEMP_COMMON=!FIRST_DIR!
+for %%s in (%SOLUTION_LIST%) do (
+    for %%f in ("%%~s") do (
+        call :get_common_path "!TEMP_COMMON!" "%%~dpf"
+    )
+)
+
+set COMMON_BASE=!TEMP_COMMON!
+endlocal & set COMMON_BASE=%COMMON_BASE%
+goto :eof
+
+REM Function to get common path between two paths
+:get_common_path
+setlocal enabledelayedexpansion
+set PATH1=%~1
+set PATH2=%~2
+set COMMON=
+
+REM Simple approach - find common drive and root parts
+for /f "tokens=1 delims=\" %%a in ("!PATH1!") do set DRIVE1=%%a
+for /f "tokens=1 delims=\" %%a in ("!PATH2!") do set DRIVE2=%%a
+
+if /i "!DRIVE1!"=="!DRIVE2!" (
+    set COMMON=!DRIVE1!\
+) else (
+    set COMMON=
+)
+
+endlocal & set TEMP_COMMON=%COMMON%
+goto :eof
+
+REM Function to display a single solution option with highlighting
+:display_solution_option
+setlocal enabledelayedexpansion
+set SOLUTION_PATH=%~1
+set OPTION_INDEX=%~2
+
+REM Get relative path from common base
+set REL_PATH=!SOLUTION_PATH!
+if defined COMMON_BASE (
+    set REL_PATH=!SOLUTION_PATH:%COMMON_BASE%=!
+)
+
+REM Extract filename and directory
+for %%f in ("!SOLUTION_PATH!") do (
+    set FILENAME=%%~nxf
+    set DIRNAME=%%~dpf
+)
+
+REM Display with enhanced formatting
+if "!REL_PATH!"=="!SOLUTION_PATH!" (
+    echo   %OPTION_INDEX%. !FILENAME!
+    echo      ^> !SOLUTION_PATH!
+) else (
+    echo   %OPTION_INDEX%. !FILENAME!
+    echo      ^> ...!REL_PATH!
+)
+
+goto :eof
+
+REM Function to validate choice and set chosen solution
+:validate_and_set_choice
+setlocal enabledelayedexpansion
+
+REM Validate input is a number
+echo !CHOICE! | findstr /r "^[0-9][0-9]*$" >nul
+if %errorlevel% neq 0 (
+    echo Invalid input. Please enter a number.
+    exit /b 1
+)
+
+REM Validate range
+if !CHOICE! lss 1 (
+    echo Invalid choice. Please enter a number between 1 and %SOLUTION_COUNT%.
+    exit /b 1
+)
+if !CHOICE! gtr %SOLUTION_COUNT% (
+    echo Invalid choice. Please enter a number between 1 and %SOLUTION_COUNT%.
+    exit /b 1
+)
+
+REM Set chosen solution
+set INDEX=1
+for %%s in (%SOLUTION_LIST%) do (
+    if !INDEX!==!CHOICE! (
+        endlocal & set CHOSEN_SOLUTION=%%~s
+        goto :eof
+    )
+    set /a INDEX+=1
+)
+
+endlocal
 goto :eof
