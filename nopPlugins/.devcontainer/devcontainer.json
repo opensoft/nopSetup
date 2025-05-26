@@ -1,0 +1,67 @@
+{
+	"name": "nopPlugins",
+
+	"containerEnv": {
+		// Option A: Indicate the type/purpose
+		"DEV_CONTAINER_FRAMEWORK": "NOPCOMMERCE",
+		// Option B: Pass the exact friendly name (can be combined with A)
+		"DEV_CONTAINER_PROJECT": "NOPPLUGINS",
+		 // Renamed plugin source code location variable
+		"NOP_PLUGIN_PATH": "/workspace/src/Plugins"
+	},
+
+	"forwardPorts": [5000, 5001],
+	"remoteUser": "${localEnv:USER}", // Dynamically use the host user when attaching to the container
+	"customizations": {
+	  "vscode": {
+		"extensions": [
+		  "ms-dotnettools.csdevkit", // C# Dev Kit
+		  "ms-dotnettools.csharp", // Core C# support (required by Dev Kit)
+		  "ms-vscode.vscode-node-debug2",
+		  //ernandoescolar.vscode-solution-explorer",
+		  "esbenp.prettier-vscode",
+		  "ms-mssql.mssql",
+		  "ms-azuretools.vscode-docker",
+		  "eamodio.gitlens",
+		  //treetsidesoftware.code-spell-checker",
+		  "vscode-icons-team.vscode-icons",
+		  "visualstudioexptteam.vscodeintellicode",
+		  "ms-vscode.js-debug-chrome", // Or ms-vscode.js-debug-edge depending on your browser.
+		  //"ritwickdey.LiveServer",
+		  "dbaeumer.vscode-eslint", //Javascript linter.
+		  "ms-vscode.live-server",
+		  //"grapecity.gc-excelviewer",
+		  //txr.sqltools"
+		],
+		"settings": {
+		  "terminal.integrated.profiles.linux": {
+			"nopCommerce bash": {
+			  "path": "/bin/bash"
+			},
+			"nopCommerce zsh": {
+			  "path": "/bin/zsh"
+			}
+		  },
+		  "terminal.integrated.defaultProfile.linux": "bash",
+		  "debug.node.autoAttach": "disabled",
+		  "editor.formatOnSave": true,
+		  "editor.tabSize": 4,
+		  "editor.wordWrap": "on",
+		  "editor.minimap.enabled": true,
+		  "editor.codeLens": true
+		}
+	  }
+	},
+	"dockerComposeFile": "./docker-compose.yml",
+	"service": "nop.plg.web",
+	"workspaceFolder": "/workspace",
+	"shutdownAction": "stopCompose",
+	"overrideCommand": false, // Added to prevent overriding the container's default command
+	"mounts": [
+        "source=${localEnv:HOME}/.ssh,target=/home/${localEnv:USER}/.ssh,type=bind,consistency=cached", // Dynamically use the host user
+        "source=${localWorkspaceFolder}/bin,target=/workspace/bin,type=bind,consistency=cached",
+        "source=${localWorkspaceFolder}/src,target=/workspace/src,type=bind,consistency=cached",
+        "source=${localWorkspaceFolder}/../sites,target=/workspace/sites,type=bind,consistency=cached",
+        "source=${localWorkspaceFolder}/../.vscode,target=/workspace/.vscode,type=bind,consistency=cached" // Adjusted target path
+    ]
+}

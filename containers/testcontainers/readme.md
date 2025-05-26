@@ -1,0 +1,1 @@
+In TestContainer we keep the preious runtimes that we deployed on production. This is so we can test a stack with the new or current runtims vs the older runtimes.

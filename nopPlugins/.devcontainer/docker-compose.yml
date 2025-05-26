@@ -1,0 +1,49 @@
+name: nop-plugins-stack
+version: "3.7"
+services:
+    nop.plg.web:
+        container_name: nop.plg.web
+        build:
+            context: ../..
+            dockerfile: ./containers/devcontainers/Nop.Web/Dockerfile
+            args:
+                IDE_USER: "${USER:-defaultuser}"  # Default to 'defaultuser' if USER is not set
+                IDE_UID: ${USERID:-1000}         # Default to '1000' if USERID is not set
+                IDE_GID: ${GROUPID:-1000}        # Default to '1000' if GROUPID is not set
+                DEBUG: "${DEBUG:-false}"         # Default to 'false' if DEBUG is not set
+        user: "${USER:-defaultuser}"
+        environment:
+            - USER=${USER:-defaultuser}
+            - USERID=${USERID:-1000}
+            - GROUPID=${GROUPID:-1000}
+            - DEBUG=${DEBUG:-false}             # Pass DEBUG to the container environment
+        ports:
+            - "8080:8080"
+        depends_on:
+            nop.plg.mssql:                       # Updated service name to match changes
+                condition: service_started
+                required: true
+        networks:
+            - nop.plg.net                        # Removed trailing colon
+        # volumes:
+        #     - type: bind
+        #       source: ../src
+        #       target: /workspace/src
+        #     - type: bind
+        #       source: ../.devcontainer
+        #       target: /workspace/.devcontainer
+    nop.plg.mssql:                             # Updated service name to match changes
+        image: "mcr.microsoft.com/mssql/server:2019-latest"
+        container_name: nop.plg.mssql            # Updated container name to match changes
+        environment:
+            SA_PASSWORD: "${MSSQL_SA_PASSWORD:-YourStrong@Passw0rd}"  # Default password if not set
+            ACCEPT_EULA: "Y"
+            MSSQL_PID: "Express"
+        networks:
+            - nop.plg.net                        # Updated network name to match changes
+        ports:
+            - "1433:1433"  # Expose SQL Server port
+
+networks:
+  nop.plg.net:                                  # Updated network name to match changes
+    driver: bridge
