@@ -35,15 +35,14 @@ if not "%ACTION%"=="--remove" (
     )
 )
 set REPO_SLUG=Nop.Plugin.Opensoft.%REPO_NAME%
-set DEVOPS_PROJECT=FarHeapSolutions@vs-ssh.visualstudio.com:v3/FarHeapSolutions/Nop%%20Plugins
+set DEVOPS_PROJECT=git@ssh.dev.azure.com:v3/FarHeapSolutions/Nop%%20Plugins
 
 REM Get current directory
 set CURRENT_DIR=%CD%
 if "%VERBOSE%"=="true" echo [DEBUG] Current directory: %CURRENT_DIR%
 
-REM Search for solution files
+REM Search for solution files - use array approach
 set SOLUTION_COUNT=0
-set SOLUTION_LIST=
 set CHOSEN_SOLUTION=
 
 REM Search up the directory tree
@@ -55,7 +54,7 @@ REM Check for .sln files in current search directory
 for %%f in ("%SEARCH_DIR%\*.sln") do (
     if exist "%%f" (
         set /a SOLUTION_COUNT+=1
-        set SOLUTION_LIST=!SOLUTION_LIST!"%%f"
+        set SOLUTION_!SOLUTION_COUNT!=%%f
         if "%VERBOSE%"=="true" echo [DEBUG] Found solution: %%f
     )
 )
@@ -86,24 +85,19 @@ if %SOLUTION_COUNT%==0 (
 )
 
 if %SOLUTION_COUNT%==1 (
-    for %%s in (%SOLUTION_LIST%) do set CHOSEN_SOLUTION=%%~s
+    set CHOSEN_SOLUTION=!SOLUTION_1!
     if "%VERBOSE%"=="true" echo [DEBUG] Using single solution: !CHOSEN_SOLUTION!
     goto solution_selected
 )
 
-REM Multiple solutions - show selection menu
+REM Multiple solutions - show enhanced selection menu
+echo.
 echo Multiple solution files found:
-set INDEX=1
-for %%s in (%SOLUTION_LIST%) do (
-    echo !INDEX!. %%~s
-    set /a INDEX+=1
-)
+echo ================================
+call :display_solution_choices
+echo.
 set /p CHOICE=Please choose a solution file (1-%SOLUTION_COUNT%):
-set INDEX=1
-for %%s in (%SOLUTION_LIST%) do (
-    if !INDEX!==!CHOICE! set CHOSEN_SOLUTION=%%~s
-    set /a INDEX+=1
-)
+call :validate_and_set_choice
 
 :solution_selected
 if "%CHOSEN_SOLUTION%"=="" (
@@ -134,7 +128,21 @@ REM Clone the repository
 echo Cloning repository '%REPO_SLUG%'...
 git clone "%DEVOPS_PROJECT%/%REPO_SLUG%" "%CLONE_DIR%"
 if %errorlevel% neq 0 (
+    echo.
     echo Error: Failed to clone repository '%REPO_SLUG%'
+    echo.
+    echo Common issues and solutions:
+    echo 1. SSH Configuration: Check if ~/.ssh/config has UTF-8 BOM
+    echo    - Open %USERPROFILE%\.ssh\config in Notepad++
+    echo    - Go to Encoding ^> Convert to UTF-8 without BOM
+    echo    - Save the file
+    echo.
+    echo 2. SSH Key Authentication: Ensure your SSH key is added to Azure DevOps
+    echo    - Test with: ssh -T git@ssh.dev.azure.com
+    echo.
+    echo 3. Repository Access: Verify you have access to the repository
+    echo    - Check: %DEVOPS_PROJECT%/%REPO_SLUG%
+    echo.
     exit /b 1
 )
 
@@ -213,7 +221,7 @@ REM Check for .sln files in current directory
 for %%f in ("%SEARCH_PATH%\*.sln") do (
     if exist "%%f" (
         set /a SOLUTION_COUNT+=1
-        set SOLUTION_LIST=!SOLUTION_LIST!"%%f"
+        set SOLUTION_!SOLUTION_COUNT!=%%f
         if "%VERBOSE%"=="true" echo [DEBUG] Found solution: %%f
     )
 )
@@ -223,4 +231,36 @@ set /a NEXT_DEPTH=%DEPTH%+1
 for /d %%d in ("%SEARCH_PATH%\*") do (
     call :search_down "%%d" %NEXT_DEPTH%
 )
+goto :eof
+
+REM Function to display solution choices with highlighted differences
+:display_solution_choices
+set INDEX=1
+:display_loop
+if %INDEX% gtr %SOLUTION_COUNT% goto :eof
+call set CURRENT_SOL=%%SOLUTION_%INDEX%%%
+for %%f in ("%CURRENT_SOL%") do (
+    echo   %INDEX%. %%~nxf
+    echo      ^> %%f
+)
+set /a INDEX+=1
+goto display_loop
+
+REM Function to validate choice and set chosen solution
+:validate_and_set_choice
+REM Trim any whitespace from CHOICE
+for /f "tokens=* delims= " %%a in ("%CHOICE%") do set CHOICE=%%a
+
+REM Validate range
+if %CHOICE% lss 1 (
+    echo Invalid choice. Please enter a number between 1 and %SOLUTION_COUNT%.
+    exit /b 1
+)
+if %CHOICE% gtr %SOLUTION_COUNT% (
+    echo Invalid choice. Please enter a number between 1 and %SOLUTION_COUNT%.
+    exit /b 1
+)
+
+REM Set chosen solution using array index
+call set CHOSEN_SOLUTION=%%SOLUTION_%CHOICE%%%
 goto :eof

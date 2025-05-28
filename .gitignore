@@ -8,6 +8,7 @@ nopPlugins/*
 !nopPlugins/.vscode/**/*
 !nopPlugins/.devcontainer/
 !nopPlugins/.devcontainer/**/*
+!nopPlugins/src/NopCommerce.sln
 nopSolution/*
 !nopSolution/.vscode/
 !nopSolution/.vscode/**/*
