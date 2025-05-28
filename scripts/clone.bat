@@ -35,15 +35,14 @@ if not "%ACTION%"=="--remove" (
     )
 )
 set REPO_SLUG=Nop.Plugin.Opensoft.%REPO_NAME%
-set DEVOPS_PROJECT=FarHeapSolutions@vs-ssh.visualstudio.com:v3/FarHeapSolutions/Nop%%20Plugins
+set DEVOPS_PROJECT=git@ssh.dev.azure.com:v3/FarHeapSolutions/Nop%%20Plugins
 
 REM Get current directory
 set CURRENT_DIR=%CD%
 if "%VERBOSE%"=="true" echo [DEBUG] Current directory: %CURRENT_DIR%
 
-REM Search for solution files
+REM Search for solution files - use array approach
 set SOLUTION_COUNT=0
-set SOLUTION_LIST=
 set CHOSEN_SOLUTION=
 
 REM Search up the directory tree
@@ -55,7 +54,7 @@ REM Check for .sln files in current search directory
 for %%f in ("%SEARCH_DIR%\*.sln") do (
     if exist "%%f" (
         set /a SOLUTION_COUNT+=1
-        set SOLUTION_LIST=!SOLUTION_LIST!"%%f"
+        set SOLUTION_!SOLUTION_COUNT!=%%f
         if "%VERBOSE%"=="true" echo [DEBUG] Found solution: %%f
     )
 )
@@ -86,7 +85,7 @@ if %SOLUTION_COUNT%==0 (
 )
 
 if %SOLUTION_COUNT%==1 (
-    for %%s in (%SOLUTION_LIST%) do set CHOSEN_SOLUTION=%%~s
+    set CHOSEN_SOLUTION=!SOLUTION_1!
     if "%VERBOSE%"=="true" echo [DEBUG] Using single solution: !CHOSEN_SOLUTION!
     goto solution_selected
 )
@@ -129,7 +128,21 @@ REM Clone the repository
 echo Cloning repository '%REPO_SLUG%'...
 git clone "%DEVOPS_PROJECT%/%REPO_SLUG%" "%CLONE_DIR%"
 if %errorlevel% neq 0 (
+    echo.
     echo Error: Failed to clone repository '%REPO_SLUG%'
+    echo.
+    echo Common issues and solutions:
+    echo 1. SSH Configuration: Check if ~/.ssh/config has UTF-8 BOM
+    echo    - Open %USERPROFILE%\.ssh\config in Notepad++
+    echo    - Go to Encoding ^> Convert to UTF-8 without BOM
+    echo    - Save the file
+    echo.
+    echo 2. SSH Key Authentication: Ensure your SSH key is added to Azure DevOps
+    echo    - Test with: ssh -T git@ssh.dev.azure.com
+    echo.
+    echo 3. Repository Access: Verify you have access to the repository
+    echo    - Check: %DEVOPS_PROJECT%/%REPO_SLUG%
+    echo.
     exit /b 1
 )
 
@@ -208,7 +221,7 @@ REM Check for .sln files in current directory
 for %%f in ("%SEARCH_PATH%\*.sln") do (
     if exist "%%f" (
         set /a SOLUTION_COUNT+=1
-        set SOLUTION_LIST=!SOLUTION_LIST!"%%f"
+        set SOLUTION_!SOLUTION_COUNT!=%%f
         if "%VERBOSE%"=="true" echo [DEBUG] Found solution: %%f
     )
 )
@@ -222,124 +235,32 @@ goto :eof
 
 REM Function to display solution choices with highlighted differences
 :display_solution_choices
-setlocal enabledelayedexpansion
-
-REM Find common base path
-call :find_common_base_path
-
-REM Display solutions with highlighting
 set INDEX=1
-for %%s in (%SOLUTION_LIST%) do (
-    call :display_solution_option "%%~s" !INDEX!
-    set /a INDEX+=1
+:display_loop
+if %INDEX% gtr %SOLUTION_COUNT% goto :eof
+call set CURRENT_SOL=%%SOLUTION_%INDEX%%%
+for %%f in ("%CURRENT_SOL%") do (
+    echo   %INDEX%. %%~nxf
+    echo      ^> %%f
 )
-goto :eof
-
-REM Function to find common base path among all solutions
-:find_common_base_path
-setlocal enabledelayedexpansion
-set COMMON_BASE=
-set FIRST_SOLUTION=
-
-REM Get first solution as reference
-for %%s in (%SOLUTION_LIST%) do (
-    if "!FIRST_SOLUTION!"=="" set FIRST_SOLUTION=%%~s
-)
-
-REM Extract directory of first solution
-for %%f in ("!FIRST_SOLUTION!") do set FIRST_DIR=%%~dpf
-
-REM Find common path by comparing with other solutions
-set TEMP_COMMON=!FIRST_DIR!
-for %%s in (%SOLUTION_LIST%) do (
-    for %%f in ("%%~s") do (
-        call :get_common_path "!TEMP_COMMON!" "%%~dpf"
-    )
-)
-
-set COMMON_BASE=!TEMP_COMMON!
-endlocal & set COMMON_BASE=%COMMON_BASE%
-goto :eof
-
-REM Function to get common path between two paths
-:get_common_path
-setlocal enabledelayedexpansion
-set PATH1=%~1
-set PATH2=%~2
-set COMMON=
-
-REM Simple approach - find common drive and root parts
-for /f "tokens=1 delims=\" %%a in ("!PATH1!") do set DRIVE1=%%a
-for /f "tokens=1 delims=\" %%a in ("!PATH2!") do set DRIVE2=%%a
-
-if /i "!DRIVE1!"=="!DRIVE2!" (
-    set COMMON=!DRIVE1!\
-) else (
-    set COMMON=
-)
-
-endlocal & set TEMP_COMMON=%COMMON%
-goto :eof
-
-REM Function to display a single solution option with highlighting
-:display_solution_option
-setlocal enabledelayedexpansion
-set SOLUTION_PATH=%~1
-set OPTION_INDEX=%~2
-
-REM Get relative path from common base
-set REL_PATH=!SOLUTION_PATH!
-if defined COMMON_BASE (
-    set REL_PATH=!SOLUTION_PATH:%COMMON_BASE%=!
-)
-
-REM Extract filename and directory
-for %%f in ("!SOLUTION_PATH!") do (
-    set FILENAME=%%~nxf
-    set DIRNAME=%%~dpf
-)
-
-REM Display with enhanced formatting
-if "!REL_PATH!"=="!SOLUTION_PATH!" (
-    echo   %OPTION_INDEX%. !FILENAME!
-    echo      ^> !SOLUTION_PATH!
-) else (
-    echo   %OPTION_INDEX%. !FILENAME!
-    echo      ^> ...!REL_PATH!
-)
-
-goto :eof
+set /a INDEX+=1
+goto display_loop
 
 REM Function to validate choice and set chosen solution
 :validate_and_set_choice
-setlocal enabledelayedexpansion
-
-REM Validate input is a number
-echo !CHOICE! | findstr /r "^[0-9][0-9]*$" >nul
-if %errorlevel% neq 0 (
-    echo Invalid input. Please enter a number.
-    exit /b 1
-)
+REM Trim any whitespace from CHOICE
+for /f "tokens=* delims= " %%a in ("%CHOICE%") do set CHOICE=%%a
 
 REM Validate range
-if !CHOICE! lss 1 (
+if %CHOICE% lss 1 (
     echo Invalid choice. Please enter a number between 1 and %SOLUTION_COUNT%.
     exit /b 1
 )
-if !CHOICE! gtr %SOLUTION_COUNT% (
+if %CHOICE% gtr %SOLUTION_COUNT% (
     echo Invalid choice. Please enter a number between 1 and %SOLUTION_COUNT%.
     exit /b 1
 )
 
-REM Set chosen solution
-set INDEX=1
-for %%s in (%SOLUTION_LIST%) do (
-    if !INDEX!==!CHOICE! (
-        endlocal & set CHOSEN_SOLUTION=%%~s
-        goto :eof
-    )
-    set /a INDEX+=1
-)
-
-endlocal
+REM Set chosen solution using array index
+call set CHOSEN_SOLUTION=%%SOLUTION_%CHOICE%%%
 goto :eof
