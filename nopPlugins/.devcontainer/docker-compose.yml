@@ -1,8 +1,9 @@
 name: nop-plugins-stack
-version: "3.7"
 services:
     nop.plg.web:
         container_name: nop.plg.web
+        env_file:
+            - .env
         build:
             context: ../..
             dockerfile: ./containers/devcontainers/Nop.Web/Dockerfile

@@ -62,6 +62,6 @@
         "source=${localWorkspaceFolder}/bin,target=/workspace/bin,type=bind,consistency=cached",
         "source=${localWorkspaceFolder}/src,target=/workspace/src,type=bind,consistency=cached",
         "source=${localWorkspaceFolder}/../sites,target=/workspace/sites,type=bind,consistency=cached",
-        "source=${localWorkspaceFolder}/../.vscode,target=/workspace/.vscode,type=bind,consistency=cached" // Adjusted target path
+        "source=${localWorkspaceFolder}/../.vscode,target=/workspace/.vscode,type=bind,consistency=cached" // Mount .vscode from parent workspace
     ]
 }
