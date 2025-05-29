@@ -304,9 +304,8 @@ echo ""
 echo "-----------------------------------------------------"
 echo "nopCommerce development environment setup complete!"
 echo " - nopCommerce repository cloned into 'nopCommerce/'"
-echo " - nopPlugins repository cloned into 'nopPlugins/'" # This line seems incorrect based on the script logic, nopPlugins repo isn't cloned here. Consider removing or correcting.
-echo " - nopCommerce v4.80.5 source extracted into 'nopSolution/' (cleaned)"
-echo " - nopCommerce v4.80.5 binaries extracted into 'nopPlugins Container/' (cleaned)" # Added this line for clarity
+echo " - nopCommerce v4.80.6 source extracted into 'nopSolution/' (cleaned)"
+echo " - nopCommerce v4.80.6 binaries extracted into 'nopPlugins/bin/Debug/net9.0/' (cleaned)"
 
 echo "-----------------------------------------------------"
 
