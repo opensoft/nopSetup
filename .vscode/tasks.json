@@ -45,12 +45,13 @@
         "args": [
           "watch",
           "run",
-          "--project",
-          // Specify the Nop.Web project (adjust path if needed)
-          "${workspaceFolder}/src/Presentation/Nop.Web/Nop.Web.csproj"
+          "${workspaceFolder}/bin/Debug/net9.0/Nop.Web.dll"
         ],
+        "options": {
+          "cwd": "${workspaceFolder}/bin/Debug/net9.0"
+        },
         "problemMatcher": "$msCompile", // Use msCompile to catch build errors during watch
-        "detail": "Runs Nop.Web with dotnet watch for hot reload."
+        "detail": "Runs Nop.Web with dotnet watch for hot reload from compiled DLL."
       },
       {
         // Task to simply run the Nop.Web project (without watch)
@@ -58,15 +59,13 @@
         "command": "dotnet",
         "type": "process",
         "args": [
-          "run",
-          "--project",
-          "${workspaceFolder}/src/Presentation/Nop.Web/Nop.Web.csproj",
-          // Run in Debug configuration by default
-          "--configuration",
-          "Debug"
+          "${workspaceFolder}/bin/Debug/net9.0/Nop.Web.dll"
         ],
+        "options": {
+          "cwd": "${workspaceFolder}/bin/Debug/net9.0"
+        },
         "problemMatcher": "$msCompile",
-        "detail": "Runs the Nop.Web project in Debug configuration."
+        "detail": "Runs the Nop.Web project from compiled DLL."
       },
       {
         // Task to clean the solution (remove bin/obj folders)
