@@ -74,14 +74,32 @@ if "%SITE_MODE%"=="true" (
         echo Usage: clone [--verbose ^| -v] [--remove ^| -rm] --site ^<site-name^>
         exit /b 1
     )
+    REM Validate site name contains only valid characters
+    echo "%SITE_NAME%" | findstr /r "[^a-zA-Z0-9_-]" >nul
+    if %errorlevel% equ 0 (
+        echo Error: Site name '%SITE_NAME%' contains invalid characters. Use only letters, numbers, hyphens, and underscores.
+        exit /b 1
+    )
 ) else (
     if "%REPO_NAME%"=="" (
         echo Usage: clone [--verbose ^| -v] [--remove ^| -rm] [--site ^| -s] ^<repo-name-or-site-name^>
         exit /b 1
     )
+    REM Validate repo name contains only valid characters (remove validation for now)
+    REM echo "%REPO_NAME%" | findstr /r "[^a-zA-Z0-9_.-]" >nul
+    REM if %errorlevel% equ 0 (
+    REM     echo Error: Repository name '%REPO_NAME%' contains invalid characters. Use only letters, numbers, hyphens, periods, and underscores.
+    REM     exit /b 1
+    REM )
 )
 
-set REPO_SLUG=Nop.Plugin.Opensoft.%REPO_NAME%
+REM Set repo slug and project based on mode
+if "%SITE_MODE%"=="true" (
+    if "%VERBOSE%"=="true" echo [DEBUG] Site mode: %SITE_NAME%
+) else (
+    set REPO_SLUG=Nop.Plugin.Opensoft.%REPO_NAME%
+    if "%VERBOSE%"=="true" echo [DEBUG] Single repo mode: %REPO_SLUG%
+)
 set DEVOPS_PROJECT=git@ssh.dev.azure.com:v3/FarHeapSolutions/Nop%%20Plugins
 
 REM Get current directory
@@ -184,13 +202,28 @@ echo Script completed successfully.
 exit /b 0
 
 :handle_site_mode
-REM Look for PluginList.txt in the sites folder at the workspace root
-for %%i in ("%~dp0") do set SCRIPT_DIR=%%~fi
-for %%i in ("%SCRIPT_DIR%\..") do set WORKSPACE_ROOT=%%~fi
+REM Determine workspace root more reliably
+pushd "%~dp0"
+cd ..
+set WORKSPACE_ROOT=%CD%
+popd
+
 set PLUGIN_LIST_FILE=%WORKSPACE_ROOT%\sites\%SITE_NAME%\PluginList.txt
+
+if "%VERBOSE%"=="true" echo [DEBUG] Looking for plugin list at: %PLUGIN_LIST_FILE%
 
 if not exist "%PLUGIN_LIST_FILE%" (
     echo Error: PluginList.txt file not found at '%PLUGIN_LIST_FILE%'.
+    echo.
+    echo Expected structure:
+    echo   %WORKSPACE_ROOT%\sites\%SITE_NAME%\PluginList.txt
+    echo.
+    echo Available sites:
+    if exist "%WORKSPACE_ROOT%\sites" (
+        for /d %%d in ("%WORKSPACE_ROOT%\sites\*") do echo   - %%~nd
+    ) else (
+        echo   No sites folder found at %WORKSPACE_ROOT%\sites
+    )
     exit /b 1
 )
 
@@ -261,45 +294,49 @@ exit /b 0
 
 REM Function to process a single repository (clone or remove)
 :process_repository
+setlocal enabledelayedexpansion
 set OPERATION=%~1
 set REPO_NAME_PARAM=%~2
 set REPO_SLUG_LOCAL=Nop.Plugin.Opensoft.%REPO_NAME_PARAM%
 set CLONE_DIR_LOCAL=%PLUGINS_DIR%\%REPO_SLUG_LOCAL%
 
-if "%OPERATION%"=="clone" (
-    echo --- Cloning %REPO_NAME_PARAM% ---
-) else (
-    echo --- Removing %REPO_NAME_PARAM% ---
-)
+if "%VERBOSE%"=="true" echo [DEBUG] Processing: %OPERATION% %REPO_NAME_PARAM%
 
 if "%OPERATION%"=="clone" (
+    echo --- Cloning %REPO_NAME_PARAM% ---
+
     if exist "%CLONE_DIR_LOCAL%" (
         echo Repository %REPO_SLUG_LOCAL% already exists. Skipping clone.
-        goto :eof
+        goto process_end
     )
 
     git clone "%DEVOPS_PROJECT%/%REPO_SLUG_LOCAL%" "%CLONE_DIR_LOCAL%"
-    if %errorlevel% neq 0 (
-        echo Error cloning %REPO_SLUG_LOCAL%. Skipping.
-        goto :eof
+    if !errorlevel! neq 0 (
+        echo Error: Failed to clone %REPO_SLUG_LOCAL%. Skipping.
+        goto process_end
     )
 
-    cd /d "%CLONE_DIR_LOCAL%"
-    if %errorlevel% neq 0 (
-        echo Error accessing directory %CLONE_DIR_LOCAL%. Skipping.
-        goto :eof
+    REM Verify the clone was successful by checking for the project file
+    if not exist "%CLONE_DIR_LOCAL%\%REPO_SLUG_LOCAL%.csproj" (
+        echo Error: Repository cloned but project file '%REPO_SLUG_LOCAL%.csproj' is missing
+        echo Removing incomplete clone...
+        rmdir /s /q "%CLONE_DIR_LOCAL%"
+        goto process_end
     )
 
+    pushd "%CLONE_DIR_LOCAL%"
     git checkout 4.80/develop
-    if %errorlevel% neq 0 (
-        echo Error checking out branch for %REPO_SLUG_LOCAL%. Skipping.
-        goto :eof
+    if !errorlevel! neq 0 (
+        echo Warning: Failed to switch to branch '4.80/develop' for %REPO_SLUG_LOCAL%
+        echo The repository was cloned but may be on a different default branch.
     )
+    popd
 
-    cd /d "%SOLUTION_DIR%"
+    REM Add to solution
+    pushd "%SOLUTION_DIR%"
     if exist "Plugins\%REPO_SLUG_LOCAL%\%REPO_SLUG_LOCAL%.csproj" (
         dotnet sln "%CHOSEN_SOLUTION%" add --solution-folder Plugins "Plugins\%REPO_SLUG_LOCAL%\%REPO_SLUG_LOCAL%.csproj"
-        if %errorlevel% equ 0 (
+        if !errorlevel! equ 0 (
             echo Project %REPO_SLUG_LOCAL% added to solution.
         ) else (
             echo Warning: Failed to add %REPO_SLUG_LOCAL% to solution.
@@ -307,8 +344,12 @@ if "%OPERATION%"=="clone" (
     ) else (
         echo Warning: Project file not found for %REPO_SLUG_LOCAL%
     )
+    popd
     echo --- Finished cloning %REPO_NAME_PARAM% ---
+
 ) else if "%OPERATION%"=="remove" (
+    echo --- Removing %REPO_NAME_PARAM% ---
+
     if exist "%CLONE_DIR_LOCAL%" (
         rmdir /s /q "%CLONE_DIR_LOCAL%"
         echo Folder '%CLONE_DIR_LOCAL%' removed.
@@ -316,12 +357,17 @@ if "%OPERATION%"=="clone" (
         echo Folder '%CLONE_DIR_LOCAL%' does not exist.
     )
 
-    cd /d "%SOLUTION_DIR%"
+    pushd "%SOLUTION_DIR%"
     dotnet sln "%CHOSEN_SOLUTION%" remove "Plugins\%REPO_SLUG_LOCAL%\%REPO_SLUG_LOCAL%.csproj" 2>nul
     echo Project %REPO_SLUG_LOCAL% removed from solution.
+    popd
     echo --- Finished removing %REPO_NAME_PARAM% ---
 )
+
+:process_end
+endlocal
 goto :eof
+
 REM Function to search down directories
 :search_down
 set SEARCH_PATH=%~1
