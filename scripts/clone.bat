@@ -74,18 +74,12 @@ if "%SITE_MODE%"=="true" (
         echo Usage: clone [--verbose ^| -v] [--remove ^| -rm] --site ^<site-name^>
         exit /b 1
     )
-    REM Validate site name contains only valid characters
-    echo "%SITE_NAME%" | findstr /r "[^a-zA-Z0-9_-]" >nul
-    if %errorlevel% equ 0 (
-        echo Error: Site name '%SITE_NAME%' contains invalid characters. Use only letters, numbers, hyphens, and underscores.
-        exit /b 1
-    )
 ) else (
     if "%REPO_NAME%"=="" (
         echo Usage: clone [--verbose ^| -v] [--remove ^| -rm] [--site ^| -s] ^<repo-name-or-site-name^>
         exit /b 1
     )
-    REM Validate repo name contains only valid characters (remove validation for now)
+    REM Skip character validation for now - SEO is a valid name
     REM echo "%REPO_NAME%" | findstr /r "[^a-zA-Z0-9_.-]" >nul
     REM if %errorlevel% equ 0 (
     REM     echo Error: Repository name '%REPO_NAME%' contains invalid characters. Use only letters, numbers, hyphens, periods, and underscores.

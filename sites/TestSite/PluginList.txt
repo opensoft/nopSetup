@@ -1,0 +1,4 @@
+# Test site plugin list
+# Lines starting with # are comments and will be ignored
+SEO
+PayPal
