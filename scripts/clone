@@ -92,11 +92,17 @@ process_repository() {
 
     cd "$SOLUTION_DIR" || return 1
     if [ -f "Plugins/$repo_slug/$repo_slug.csproj" ]; then
-      dotnet sln "$CHOSEN_SOLUTION" add --solution-folder Plugins "Plugins/$repo_slug/$repo_slug.csproj"
-      if [ $? -eq 0 ]; then
-        echo "Project $repo_slug added to solution."
+      # Check if dotnet command is available
+      if ! command -v dotnet &> /dev/null; then
+        echo "Warning: dotnet command not found. Please add $repo_slug to solution manually."
+        echo "  Command: dotnet sln \"$CHOSEN_SOLUTION\" add --solution-folder Plugins \"Plugins/$repo_slug/$repo_slug.csproj\""
       else
-        echo "Warning: Failed to add $repo_slug to solution."
+        dotnet sln "$CHOSEN_SOLUTION" add --solution-folder Plugins "Plugins/$repo_slug/$repo_slug.csproj"
+        if [ $? -eq 0 ]; then
+          echo "Project $repo_slug added to solution."
+        else
+          echo "Warning: Failed to add $repo_slug to solution."
+        fi
       fi
     else
       echo "Warning: Project file not found for $repo_slug"
@@ -365,8 +371,12 @@ if [[ $REMOVE == true ]]; then
 
   # Remove from solution
   cd "$SOLUTION_DIR" || exit 1
-  dotnet sln "$CHOSEN_SOLUTION" remove "Plugins/$REPO_SLUG/$REPO_SLUG.csproj" 2>/dev/null
-  echo "Project '$REPO_SLUG' removed from solution."
+  if command -v dotnet &> /dev/null; then
+    dotnet sln "$CHOSEN_SOLUTION" remove "Plugins/$REPO_SLUG/$REPO_SLUG.csproj" 2>/dev/null
+    echo "Project '$REPO_SLUG' removed from solution."
+  else
+    echo "Warning: dotnet command not found. Please remove $REPO_SLUG from solution manually."
+  fi
 
   cd "$CURRENT_DIR"
   echo "Repository '$REPO_SLUG' removed successfully."
