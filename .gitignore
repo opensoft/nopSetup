@@ -14,3 +14,4 @@ nopSolution/*
 !nopSolution/.vscode/**/*
 !nopSolution/.devcontainer/
 !nopSolution/.devcontainer/**/*
+nopPlugins/src/nopCommerce.sln
