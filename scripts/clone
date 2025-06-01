@@ -94,8 +94,29 @@ process_repository() {
     if [ -f "Plugins/$repo_slug/$repo_slug.csproj" ]; then
       # Check if dotnet command is available
       if ! command -v dotnet &> /dev/null; then
-        echo "Warning: dotnet command not found. Please add $repo_slug to solution manually."
-        echo "  Command: dotnet sln \"$CHOSEN_SOLUTION\" add --solution-folder Plugins \"Plugins/$repo_slug/$repo_slug.csproj\""
+        echo "dotnet command not found. Adding project to solution manually..."        # Generate a GUID for the project
+        project_guid=$(uuidgen | tr '[:lower:]' '[:upper:]')
+
+        # Check if project already exists in solution
+        if grep -q "Project.*$repo_slug" "$CHOSEN_SOLUTION"; then
+          echo "Project $repo_slug already exists in solution. Skipping."
+          return 0
+        fi
+
+        # Add the project entry as a separate project block after the Plugins folder
+        sed -i "/Project(\"{2150E333-8FDC-42A3-9474-1A3956D46DE8}\") = \"Plugins\"/,/^EndProject$/ {
+          /^EndProject$/ a\\Project(\"{9A19103F-16F7-4668-BE54-9A1E7A4F7556}\") = \"$repo_slug\", \"Plugins\\\\$repo_slug\\\\$repo_slug.csproj\", \"{$project_guid}\"\\nEndProject
+        }" "$CHOSEN_SOLUTION"
+
+        # Add the project to the Plugins folder in NestedProjects section
+        if grep -q "GlobalSection(NestedProjects)" "$CHOSEN_SOLUTION"; then
+          sed -i "/GlobalSection(NestedProjects) = preSolution/a \		{$project_guid} = {07D57EEB-2F50-60C4-C011-FE4FA775C9A8}" "$CHOSEN_SOLUTION"
+        else
+          # Add NestedProjects section if it doesn't exist
+          sed -i "/GlobalSection(SolutionProperties)/i \	GlobalSection(NestedProjects) = preSolution\\n\		{$project_guid} = {07D57EEB-2F50-60C4-C011-FE4FA775C9A8}\\n\	EndGlobalSection" "$CHOSEN_SOLUTION"
+        fi
+
+        echo "Project $repo_slug added to solution manually."
       else
         dotnet sln "$CHOSEN_SOLUTION" add --solution-folder Plugins "Plugins/$repo_slug/$repo_slug.csproj"
         if [ $? -eq 0 ]; then
@@ -107,7 +128,6 @@ process_repository() {
     else
       echo "Warning: Project file not found for $repo_slug"
     fi
-
   elif [[ "$operation" == "remove" ]]; then
     if [ -d "$clone_dir" ]; then
       rm -rf "$clone_dir"
@@ -117,8 +137,41 @@ process_repository() {
     fi
 
     cd "$SOLUTION_DIR" || return 1
-    dotnet sln "$CHOSEN_SOLUTION" remove "Plugins/$repo_slug/$repo_slug.csproj" 2>/dev/null
-    echo "Project $repo_slug removed from solution."
+    if command -v dotnet &> /dev/null; then
+      dotnet sln "$CHOSEN_SOLUTION" remove "Plugins/$repo_slug/$repo_slug.csproj" 2>/dev/null
+      echo "Project $repo_slug removed from solution."
+    else
+      # Manually remove from solution file
+      echo "dotnet command not found. Removing project from solution manually..."
+
+      # First, extract the project GUID from the solution file
+      project_guid=$(grep "Project.*$repo_slug" "$CHOSEN_SOLUTION" | sed -n 's/.*{\([A-F0-9-]*\)}"$/\1/p')
+
+      if [ -n "$project_guid" ]; then
+        echo "Found project GUID: $project_guid"
+
+        # Create temporary file for processing
+        temp_file=$(mktemp)
+
+        # Remove project entry lines (Project declaration and its EndProject)
+        awk "
+        /Project.*$repo_slug/ { skip=1; next }
+        skip && /^[[:space:]]*EndProject/ { skip=0; next }
+        !skip { print }
+        " "$CHOSEN_SOLUTION" > "$temp_file"
+
+        # Remove NestedProjects entry for this project
+        sed -i "/{$project_guid}/d" "$temp_file"
+
+        # Remove ProjectConfigurationPlatforms entries for this project
+        sed -i "/{$project_guid}\./d" "$temp_file"
+
+        mv "$temp_file" "$CHOSEN_SOLUTION"
+        echo "Project $repo_slug removed from solution manually."
+      else
+        echo "Warning: Could not find project $repo_slug in solution file."
+      fi
+    fi
   fi
 
   if [[ "$operation" == "clone" ]]; then
@@ -361,23 +414,7 @@ fi
 # Handle single repository operations
 if [[ $REMOVE == true ]]; then
   echo "Removing repository '$REPO_SLUG'..."
-
-  if [ -d "$CLONE_DIR" ]; then
-    rm -rf "$CLONE_DIR"
-    echo "Folder '$CLONE_DIR' removed successfully."
-  else
-    echo "Folder '$CLONE_DIR' does not exist."
-  fi
-
-  # Remove from solution
-  cd "$SOLUTION_DIR" || exit 1
-  if command -v dotnet &> /dev/null; then
-    dotnet sln "$CHOSEN_SOLUTION" remove "Plugins/$REPO_SLUG/$REPO_SLUG.csproj" 2>/dev/null
-    echo "Project '$REPO_SLUG' removed from solution."
-  else
-    echo "Warning: dotnet command not found. Please remove $REPO_SLUG from solution manually."
-  fi
-
+  process_repository "remove" "$REPO_NAME"
   cd "$CURRENT_DIR"
   echo "Repository '$REPO_SLUG' removed successfully."
   exit 0
