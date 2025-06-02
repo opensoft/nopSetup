@@ -345,8 +345,22 @@ else
 fi
 
 # Get solution directory
+
+# Copy solution template if it exists and target does not
+if [ -f "$SOLUTION_DIR/src/NopCommerce.sln.template" ] && [ ! -f "$SOLUTION_DIR/src/NopCommerce.sln" ]; then
+  echo "Creating solution file from template..."
+  cp "$SOLUTION_DIR/src/NopCommerce.sln.template" "$SOLUTION_DIR/src/NopCommerce.sln"
+fi
+
 SOLUTION_DIR=$(dirname "$CHOSEN_SOLUTION")
 log "Solution directory: $SOLUTION_DIR"
+
+# Copy solution template if it exists and target does not
+if [ -f "$SOLUTION_DIR/src/NopCommerce.sln.template" ] && [ ! -f "$SOLUTION_DIR/src/NopCommerce.sln" ]; then
+  echo "Creating solution file from template..."
+  cp "$SOLUTION_DIR/src/NopCommerce.sln.template" "$SOLUTION_DIR/src/NopCommerce.sln"
+fi
+
 
 # Validate solution file for Plugins folder declaration
 log "Validating solution file for Plugins folder"
