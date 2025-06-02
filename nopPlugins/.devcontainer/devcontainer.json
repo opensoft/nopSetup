@@ -42,7 +42,7 @@
 			  "path": "/bin/zsh"
 			}
 		  },
-		  "terminal.integrated.defaultProfile.linux": "bash",
+		  "terminal.integrated.defaultProfile.linux": "nopCommerce zsh",
 		  "debug.node.autoAttach": "disabled",
 		  "editor.formatOnSave": true,
 		  "editor.tabSize": 4,

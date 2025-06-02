@@ -10,8 +10,12 @@ RUN dotnet workload update && \
     apt-get install -y \
         sudo \
         openssh-client \
-        rsync && rm -rf /var/lib/apt/lists/* \
-        zsh
+        rsync \
+        zsh && \
+    rm -rf /var/lib/apt/lists/* && \
+    echo "✓ zsh installed successfully at: $(which zsh)" && \
+    echo "✓ zsh version: $(zsh --version)" && \
+    echo "✓ Available shells:" && cat /etc/shells
 WORKDIR /workspace
 # Ensure the .zshrc file exists in the build context before uncommenting the next line
 # COPY .zshrc /root/.zshrc
