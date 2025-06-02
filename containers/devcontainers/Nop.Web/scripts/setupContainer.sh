@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/bash
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(dirname "$0")"

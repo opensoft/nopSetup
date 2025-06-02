@@ -11,14 +11,29 @@ RUN dotnet workload update && \
         sudo \
         openssh-client \
         rsync \
-        zsh && \
+        zsh \
+        git \
+        curl \
+        tree \
+        jq \
+        postgresql-client \
+        mysql-client \
+        docker.io \
+        containerd && \
     rm -rf /var/lib/apt/lists/* && \
-    echo "✓ zsh installed successfully at: $(which zsh)" && \
-    echo "✓ zsh version: $(zsh --version)" && \
-    echo "✓ Available shells:" && cat /etc/shells
+    echo "✓ Development tools installed successfully:" && \
+    echo "  - zsh: $(zsh --version)" && \
+    echo "  - git: $(git --version)" && \
+    echo "  - curl: $(curl --version | head -1)" && \
+    echo "  - jq: $(jq --version)" && \
+    echo "  - tree: $(tree --version)" && \
+    echo "  - psql: $(psql --version)" && \
+    echo "  - mysql: $(mysql --version)" && \
+    echo "  - docker: $(docker --version)" && \
+    echo "  - containerd: $(containerd --version)"
 WORKDIR /workspace
-# Ensure the .zshrc file exists in the build context before uncommenting the next line
-# COPY .zshrc /root/.zshrc
+# Copy .zshrc for both root and the IDE user
+COPY .zshrc /root/.zshrc
 
 # Accept build arguments for username, UID, and GID from docker-compose
 ARG IDE_USER
@@ -95,6 +110,16 @@ RUN set -eux && \
         echo "Verifying user creation..."; \
     fi && \
     getent passwd "${IDE_USER}" || (echo "Error: User ${IDE_USER} was not created!" && exit 1)
+
+# Copy .zshrc to the IDE user's home directory and install Oh My Zsh
+RUN cp /root/.zshrc /home/${IDE_USER}/.zshrc && \
+    chown ${IDE_USER}:${IDE_USER} /home/${IDE_USER}/.zshrc && \
+    # Install Oh My Zsh for root
+    sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended && \
+    # Install Oh My Zsh for IDE_USER
+    sudo -u ${IDE_USER} sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended && \
+    # Set zsh as default shell for IDE_USER
+    chsh -s /usr/bin/zsh ${IDE_USER}
 
 
 # in debug mode, show the current working directory and its contents
