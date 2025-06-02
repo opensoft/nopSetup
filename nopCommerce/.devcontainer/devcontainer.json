@@ -19,7 +19,7 @@
         //"ms-azuretools.vscode-docker",
         //"eamodio.gitlens",
         //"streetsidesoftware.code-spell-checker",
-        //"vscode-icons-team.vscode-icons",
+        "vscode-icons-team.vscode-icons",
         //"visualstudioexptteam.vscodeintellicode",
         //"ms-vscode.js-debug-chrome", // Or ms-vscode.js-debug-edge depending on your browser.
         //"ritwickdey.LiveServer",

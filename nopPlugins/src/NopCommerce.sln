@@ -28,6 +28,9 @@ Global
 		{07D57EEB-2F50-60C4-C011-FE4FA775C9A8}.Release|x86.ActiveCfg = Release|Any CPU
 		{07D57EEB-2F50-60C4-C011-FE4FA775C9A8}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9E638929-72B8-4E90-A9AB-803F078FC6FA} = {07D57EEB-2F50-60C4-C011-FE4FA775C9A8}
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
