@@ -1,0 +1,23 @@
+version: "3.8"
+services:
+  nop-web-test:
+    container_name: nop-web-test
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      args:
+        IDE_USER: "${USER:-testuser}"
+        IDE_UID: ${USERID:-1000}
+        IDE_GID: ${GROUPID:-1000}
+        DEBUG: "${DEBUG:-true}"
+    environment:
+      - USER=${USER:-testuser}
+      - USERID=${USERID:-1000}
+      - GROUPID=${GROUPID:-1000}
+      - DEBUG=${DEBUG:-true}
+    env_file:
+      - .env
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    command: tail -f /dev/null

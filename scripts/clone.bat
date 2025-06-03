@@ -1,3 +1,8 @@
+REM Clone Script for Windows - Manage NopCommerce plugin repositories
+REM
+REM This script uses a placeholder plugin (Nop.Plugin.Placeholder) to ensure
+REM the Plugins folder definition is never removed from the solution file.
+
 @echo off
 setlocal enabledelayedexpansion
 
@@ -352,8 +357,22 @@ if "%OPERATION%"=="clone" (
     )
 
     pushd "%SOLUTION_DIR%"
-    dotnet sln "%CHOSEN_SOLUTION%" remove "Plugins\%REPO_SLUG_LOCAL%\%REPO_SLUG_LOCAL%.csproj" 2>nul
-    echo Project %REPO_SLUG_LOCAL% removed from solution.
+    REM Use dotnet sln remove since we have a placeholder plugin to prevent empty folder removal
+    where dotnet >nul 2>&1
+    if !errorlevel! equ 0 (
+        dotnet sln "%CHOSEN_SOLUTION%" remove "Plugins\%REPO_SLUG_LOCAL%\%REPO_SLUG_LOCAL%.csproj" 2>nul
+        if !errorlevel! equ 0 (
+            echo Project %REPO_SLUG_LOCAL% removed from solution.
+        ) else (
+            echo Warning: Failed to remove %REPO_SLUG_LOCAL% from solution (may not have been in solution).
+        )
+    ) else (
+        echo dotnet command not found. Removing project from solution manually...
+        REM Note: Manual removal in batch would require complex parsing
+        REM For now, just warn the user
+        echo Warning: Manual solution editing not implemented in Windows batch script.
+        echo Please remove the project manually from the solution file or install dotnet CLI.
+    )
     popd
     echo --- Finished removing %REPO_NAME_PARAM% ---
 )

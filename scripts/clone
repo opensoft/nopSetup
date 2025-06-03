@@ -137,11 +137,15 @@ process_repository() {
     fi
 
     cd "$SOLUTION_DIR" || return 1
+    # Use dotnet sln remove since we have a placeholder plugin to prevent empty folder removal
     if command -v dotnet &> /dev/null; then
-      dotnet sln "$CHOSEN_SOLUTION" remove "Plugins/$repo_slug/$repo_slug.csproj" 2>/dev/null
-      echo "Project $repo_slug removed from solution."
+      dotnet sln "$CHOSEN_SOLUTION" remove "Plugins/$repo_slug/$repo_slug.csproj"
+      if [ $? -eq 0 ]; then
+        echo "Project $repo_slug removed from solution."
+      else
+        echo "Warning: Failed to remove $repo_slug from solution (may not have been in solution)."
+      fi
     else
-      # Manually remove from solution file
       echo "dotnet command not found. Removing project from solution manually..."
 
       # First, extract the project GUID from the solution file
