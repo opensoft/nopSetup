@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nop.Plugin.Placeholder", "P
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nop.Plugin.Opensoft.EDSStore", "Plugins\Nop.Plugin.Opensoft.EDSStore\Nop.Plugin.Opensoft.EDSStore.csproj", "{E3D17A17-0B05-4CBC-97AA-50E0EBB50089}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nop.Plugin.Misc.ProductAttribute", "Plugins\Nop.Plugin.Misc.ProductAttribute\Nop.Plugin.Misc.ProductAttribute.csproj", "{96999B68-553E-4013-8AE9-9B2A060363E7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,6 +45,18 @@ Global
 		{E3D17A17-0B05-4CBC-97AA-50E0EBB50089}.Release|x64.Build.0 = Release|Any CPU
 		{E3D17A17-0B05-4CBC-97AA-50E0EBB50089}.Release|x86.ActiveCfg = Release|Any CPU
 		{E3D17A17-0B05-4CBC-97AA-50E0EBB50089}.Release|x86.Build.0 = Release|Any CPU
+		{96999B68-553E-4013-8AE9-9B2A060363E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96999B68-553E-4013-8AE9-9B2A060363E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96999B68-553E-4013-8AE9-9B2A060363E7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{96999B68-553E-4013-8AE9-9B2A060363E7}.Debug|x64.Build.0 = Debug|Any CPU
+		{96999B68-553E-4013-8AE9-9B2A060363E7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{96999B68-553E-4013-8AE9-9B2A060363E7}.Debug|x86.Build.0 = Debug|Any CPU
+		{96999B68-553E-4013-8AE9-9B2A060363E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96999B68-553E-4013-8AE9-9B2A060363E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96999B68-553E-4013-8AE9-9B2A060363E7}.Release|x64.ActiveCfg = Release|Any CPU
+		{96999B68-553E-4013-8AE9-9B2A060363E7}.Release|x64.Build.0 = Release|Any CPU
+		{96999B68-553E-4013-8AE9-9B2A060363E7}.Release|x86.ActiveCfg = Release|Any CPU
+		{96999B68-553E-4013-8AE9-9B2A060363E7}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -50,5 +64,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{9238CDDA-B482-46BB-B2B4-72DE84783CE0} = {07D57EEB-2F50-60C4-C011-FE4FA775C9A8}
 		{E3D17A17-0B05-4CBC-97AA-50E0EBB50089} = {07D57EEB-2F50-60C4-C011-FE4FA775C9A8}
+		{96999B68-553E-4013-8AE9-9B2A060363E7} = {07D57EEB-2F50-60C4-C011-FE4FA775C9A8}
 	EndGlobalSection
 EndGlobal
