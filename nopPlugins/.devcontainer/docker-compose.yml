@@ -41,6 +41,8 @@ services:
             SA_PASSWORD: "${MSSQL_SA_PASSWORD:-YourStrong@Passw0rd}"  # Default password if not set
             ACCEPT_EULA: "Y"
             MSSQL_PID: "Express"
+        volumes:
+            - nop_mssql_data:/var/opt/mssql      # Persist SQL Server data
         networks:
             - nop.plg.net                        # Updated network name to match changes
         ports:
@@ -49,3 +51,7 @@ services:
 networks:
   nop.plg.net:                                  # Updated network name to match changes
     driver: bridge
+
+volumes:
+  nop_mssql_data:                               # Named volume for SQL Server data persistence
+    driver: local

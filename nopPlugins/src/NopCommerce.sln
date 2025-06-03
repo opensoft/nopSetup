@@ -5,6 +5,10 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plugins", "Plugins", "{07D57EEB-2F50-60C4-C011-FE4FA775C9A8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nop.Plugin.Placeholder", "Plugins\Nop.Plugin.Placeholder\Nop.Plugin.Placeholder.csproj", "{9238CDDA-B482-46BB-B2B4-72DE84783CE0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nop.Plugin.Opensoft.EDSStore", "Plugins\Nop.Plugin.Opensoft.EDSStore\Nop.Plugin.Opensoft.EDSStore.csproj", "{E3D17A17-0B05-4CBC-97AA-50E0EBB50089}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,23 +19,36 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{07D57EEB-2F50-60C4-C011-FE4FA775C9A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{07D57EEB-2F50-60C4-C011-FE4FA775C9A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{07D57EEB-2F50-60C4-C011-FE4FA775C9A8}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{07D57EEB-2F50-60C4-C011-FE4FA775C9A8}.Debug|x64.Build.0 = Debug|Any CPU
-		{07D57EEB-2F50-60C4-C011-FE4FA775C9A8}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{07D57EEB-2F50-60C4-C011-FE4FA775C9A8}.Debug|x86.Build.0 = Debug|Any CPU
-		{07D57EEB-2F50-60C4-C011-FE4FA775C9A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{07D57EEB-2F50-60C4-C011-FE4FA775C9A8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{07D57EEB-2F50-60C4-C011-FE4FA775C9A8}.Release|x64.ActiveCfg = Release|Any CPU
-		{07D57EEB-2F50-60C4-C011-FE4FA775C9A8}.Release|x64.Build.0 = Release|Any CPU
-		{07D57EEB-2F50-60C4-C011-FE4FA775C9A8}.Release|x86.ActiveCfg = Release|Any CPU
-		{07D57EEB-2F50-60C4-C011-FE4FA775C9A8}.Release|x86.Build.0 = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{9E638929-72B8-4E90-A9AB-803F078FC6FA} = {07D57EEB-2F50-60C4-C011-FE4FA775C9A8}
+		{9238CDDA-B482-46BB-B2B4-72DE84783CE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9238CDDA-B482-46BB-B2B4-72DE84783CE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9238CDDA-B482-46BB-B2B4-72DE84783CE0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9238CDDA-B482-46BB-B2B4-72DE84783CE0}.Debug|x64.Build.0 = Debug|Any CPU
+		{9238CDDA-B482-46BB-B2B4-72DE84783CE0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9238CDDA-B482-46BB-B2B4-72DE84783CE0}.Debug|x86.Build.0 = Debug|Any CPU
+		{9238CDDA-B482-46BB-B2B4-72DE84783CE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9238CDDA-B482-46BB-B2B4-72DE84783CE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9238CDDA-B482-46BB-B2B4-72DE84783CE0}.Release|x64.ActiveCfg = Release|Any CPU
+		{9238CDDA-B482-46BB-B2B4-72DE84783CE0}.Release|x64.Build.0 = Release|Any CPU
+		{9238CDDA-B482-46BB-B2B4-72DE84783CE0}.Release|x86.ActiveCfg = Release|Any CPU
+		{9238CDDA-B482-46BB-B2B4-72DE84783CE0}.Release|x86.Build.0 = Release|Any CPU
+		{E3D17A17-0B05-4CBC-97AA-50E0EBB50089}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3D17A17-0B05-4CBC-97AA-50E0EBB50089}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3D17A17-0B05-4CBC-97AA-50E0EBB50089}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E3D17A17-0B05-4CBC-97AA-50E0EBB50089}.Debug|x64.Build.0 = Debug|Any CPU
+		{E3D17A17-0B05-4CBC-97AA-50E0EBB50089}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E3D17A17-0B05-4CBC-97AA-50E0EBB50089}.Debug|x86.Build.0 = Debug|Any CPU
+		{E3D17A17-0B05-4CBC-97AA-50E0EBB50089}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3D17A17-0B05-4CBC-97AA-50E0EBB50089}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E3D17A17-0B05-4CBC-97AA-50E0EBB50089}.Release|x64.ActiveCfg = Release|Any CPU
+		{E3D17A17-0B05-4CBC-97AA-50E0EBB50089}.Release|x64.Build.0 = Release|Any CPU
+		{E3D17A17-0B05-4CBC-97AA-50E0EBB50089}.Release|x86.ActiveCfg = Release|Any CPU
+		{E3D17A17-0B05-4CBC-97AA-50E0EBB50089}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9238CDDA-B482-46BB-B2B4-72DE84783CE0} = {07D57EEB-2F50-60C4-C011-FE4FA775C9A8}
+		{E3D17A17-0B05-4CBC-97AA-50E0EBB50089} = {07D57EEB-2F50-60C4-C011-FE4FA775C9A8}
 	EndGlobalSection
 EndGlobal
