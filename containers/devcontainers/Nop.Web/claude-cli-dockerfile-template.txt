@@ -1,0 +1,109 @@
+# Claude CLI Installation Template for Dockerfiles
+# Add this section to your Dockerfile after installing Node.js and npm
+
+# ============================================================================
+# CLAUDE CLI INSTALLATION SECTION
+# ============================================================================
+
+# Install Claude CLI - Method 1: Basic Installation
+RUN npm install -g @anthropic-ai/claude-code && \
+    echo "✓ Claude CLI installed: $(claude --version 2>/dev/null || echo 'installed')"
+
+# Install Claude CLI - Method 2: Enhanced with Verification and Symlink
+RUN npm install -g @anthropic-ai/claude-code && \
+    # Create system-wide symlink for better accessibility
+    ln -sf $(npm root -g)/@anthropic-ai/claude-code/bin/claude /usr/local/bin/claude && \
+    # Verify installation
+    echo "✓ Claude CLI installed: $(claude --version)" && \
+    echo "✓ Claude CLI location: $(which claude)"
+
+# Install Claude CLI - Method 3: For Multi-User Containers
+# (Use this if you create non-root users in your container)
+
+# Install system-wide (as root)
+RUN npm install -g @anthropic-ai/claude-code && \
+    ln -sf $(npm root -g)/@anthropic-ai/claude-code/bin/claude /usr/local/bin/claude
+
+# Later, after creating your user (replace ${IDE_USER} with your user variable):
+USER ${IDE_USER}
+RUN npm install -g @anthropic-ai/claude-code
+USER root
+
+# Install Claude CLI - Method 4: Complete with Error Handling
+RUN set -e && \
+    echo "Installing Claude CLI..." && \
+    npm install -g @anthropic-ai/claude-code && \
+    # Verify npm installation
+    npm list -g @anthropic-ai/claude-code && \
+    # Create symlink
+    GLOBAL_ROOT=$(npm root -g) && \
+    ln -sf "$GLOBAL_ROOT/@anthropic-ai/claude-code/bin/claude" /usr/local/bin/claude && \
+    # Test installation
+    claude --version && \
+    echo "✅ Claude CLI installation completed successfully"
+
+# ============================================================================
+# SHELL CONFIGURATION (Optional)
+# ============================================================================
+
+# Add this to your .bashrc or .zshrc template:
+COPY <<EOF /tmp/claude-shell-config.sh
+# Claude CLI Configuration
+if command -v claude >/dev/null 2>&1; then
+    echo "✓ Claude CLI available: \$(claude --version)"
+else
+    echo "⚠ Claude CLI not found"
+fi
+
+# Ensure npm global binaries are in PATH
+export PATH="\$PATH:\$(npm config get prefix)/bin"
+
+# Claude CLI aliases
+alias claude-version='claude --version'
+alias claude-help='claude --help'
+EOF
+
+# ============================================================================
+# VERIFICATION SECTION
+# ============================================================================
+
+# Add this near the end of your Dockerfile to verify everything works:
+RUN echo "=== Claude CLI Final Verification ===" && \
+    which claude && \
+    claude --version && \
+    echo "✅ Claude CLI is ready to use"
+
+# ============================================================================
+# USAGE EXAMPLES
+# ============================================================================
+
+# Example 1: Simple addition to existing Dockerfile
+# Just add after your npm install:
+# RUN npm install -g @anthropic-ai/claude-code
+
+# Example 2: Add to existing RUN command
+# RUN apt-get update && \
+#     apt-get install -y nodejs npm && \
+#     npm install -g @anthropic-ai/claude-code && \
+#     claude --version
+
+# Example 3: For .NET containers (like yours)
+# RUN apt-get update && \
+#     apt-get install -y nodejs npm && \
+#     npm install -g @anthropic-ai/claude-code && \
+#     rm -rf /var/lib/apt/lists/* && \
+#     claude --version
+
+# ============================================================================
+# TROUBLESHOOTING SECTION
+# ============================================================================
+
+# If you encounter issues, add these debugging commands:
+RUN echo "=== Claude CLI Debug Info ===" && \
+    echo "Node version: $(node --version)" && \
+    echo "NPM version: $(npm --version)" && \
+    echo "NPM root: $(npm root -g)" && \
+    echo "NPM prefix: $(npm config get prefix)" && \
+    echo "PATH: $PATH" && \
+    ls -la "$(npm root -g)/@anthropic-ai/" || echo "Claude package not found" && \
+    ls -la /usr/local/bin/claude || echo "Claude symlink not found"

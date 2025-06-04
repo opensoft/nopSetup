@@ -3,7 +3,7 @@
 # Function to display help
 show_help() {
   cat << EOF
-Clone Script - Manage NopCommerce plugin repositories
+Clone Script - Manage NopCommerce plugin repositories with Pattern Learning
 
 USAGE:
   clone [OPTIONS] <repo-name>
@@ -12,25 +12,55 @@ USAGE:
   clone --remove --site <site-name>
 
 OPTIONS:
-  -h, --help      Show this help message
-  -v, --verbose   Enable verbose output
-  -rm, --remove   Remove repository instead of cloning
-  -s, --site      Clone/remove all repositories for a specific site
+  -h, --help              Show this help message
+  -v, --verbose           Enable verbose output
+  -rm, --remove           Remove repository instead of cloning
+  -s, --site              Clone/remove all repositories for a specific site
+  --pattern <pattern>     Use specific pattern (e.g., 'Nop.Plugin.Misc.{name}')
+  --full-name <name>      Use exact repository name
+  --discover              Test all patterns to find existing repositories
+  --list-patterns         Show all known patterns
+  --clear-cache           Clear the pattern learning cache
 
 EXAMPLES:
-  clone MyPlugin                    # Clone a single plugin
-  clone --verbose MyPlugin          # Clone with verbose output
-  clone --remove MyPlugin           # Remove a plugin
-  clone --site MySite               # Clone all plugins for a site
-  clone --remove --site MySite      # Remove all plugins for a site
+  clone MyPlugin                                    # Clone using pattern learning
+  clone --verbose MyPlugin                          # Clone with verbose output
+  clone --remove MyPlugin                           # Remove a plugin
+  clone --site MySite                               # Clone all plugins for a site
+  clone --remove --site MySite                      # Remove all plugins for a site
+  clone --pattern 'Nop.Plugin.Misc.{name}' MyPlugin # Use specific pattern
+  clone --full-name 'Nop.Plugin.Exact.Name'        # Use exact repository name
+  clone --discover MyPlugin                         # Find all matching repositories
+  clone --list-patterns                             # Show all known patterns
+  clone --clear-cache                               # Clear pattern cache
 
 DESCRIPTION:
-  This script manages NopCommerce plugin repositories by cloning them from
-  Azure DevOps and adding them to the solution. It automatically finds the
-  solution file and creates the appropriate directory structure.
+  This script manages NopCommerce plugin repositories with intelligent pattern learning.
+  It automatically discovers the correct repository pattern by trying multiple known
+  patterns and caching successful ones for future use.
+
+  The pattern learning system supports various NopCommerce plugin categories:
+  - Nop.Plugin.Opensoft.{name}     (Default pattern)
+  - Nop.Plugin.Misc.{name}         (Miscellaneous plugins)
+  - Nop.Plugin.Payments.{name}     (Payment providers)
+  - Nop.Plugin.Shipping.{name}     (Shipping providers)
+  - Nop.Plugin.Widgets.{name}      (Widget plugins)
+  - Nop.Plugin.Tax.{name}          (Tax providers)
+  - And many more...
 
   For site operations, the script reads from PluginList.txt files located at:
   sites/<site-name>/PluginList.txt
+
+PATTERN LEARNING:
+  The script automatically learns which patterns work for each plugin and caches
+  the results. This means:
+  - First time: Tries multiple patterns to find the correct one
+  - Subsequent times: Uses cached pattern for instant cloning
+  - Intelligence: Suggests likely patterns based on plugin names
+
+CACHE MANAGEMENT:
+  Pattern cache is stored in: ~/.clone_pattern_cache
+  Use --clear-cache to reset the learning cache if needed.
 EOF
 }
 
@@ -39,6 +69,179 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
   show_help
   exit 0
 fi
+
+# Pattern learning system configuration
+PATTERN_CACHE_FILE="$HOME/.clone_pattern_cache"
+
+# Known NopCommerce plugin patterns (ordered by likelihood)
+PLUGIN_PATTERNS=(
+    "Nop.Plugin.Opensoft.{name}"           # Current default
+    "Nop.Plugin.Misc.{name}"               # Miscellaneous plugins
+    "Nop.Plugin.{name}"                    # Direct plugin name
+    "Nop.Plugin.Widgets.{name}"            # Widget plugins
+    "Nop.Plugin.Payments.{name}"           # Payment plugins
+    "Nop.Plugin.Shipping.{name}"           # Shipping plugins
+    "Nop.Plugin.Tax.{name}"                # Tax plugins
+    "Nop.Plugin.ExternalAuth.{name}"       # External authentication
+    "Nop.Plugin.DiscountRules.{name}"      # Discount rules
+    "Nop.Plugin.MultiFactorAuth.{name}"    # Multi-factor authentication
+    "Nop.Plugin.Pickup.{name}"             # Pickup plugins
+    "Nop.Plugin.Api.{name}"                # API plugins
+)
+
+# Function to get cached pattern for a plugin
+get_cached_pattern() {
+    local plugin_name="$1"
+    if [ -f "$PATTERN_CACHE_FILE" ]; then
+        grep "^$plugin_name|" "$PATTERN_CACHE_FILE" | cut -d'|' -f2 | head -1
+    fi
+}
+
+# Function to cache successful pattern
+cache_pattern() {
+    local plugin_name="$1"
+    local pattern="$2"
+    local timestamp=$(date +%Y-%m-%d)
+
+    # Create cache directory if it doesn't exist
+    mkdir -p "$(dirname "$PATTERN_CACHE_FILE")"
+
+    # Remove old entry if exists
+    if [ -f "$PATTERN_CACHE_FILE" ]; then
+        grep -v "^$plugin_name|" "$PATTERN_CACHE_FILE" > "$PATTERN_CACHE_FILE.tmp" 2>/dev/null || true
+        mv "$PATTERN_CACHE_FILE.tmp" "$PATTERN_CACHE_FILE" 2>/dev/null || true
+    fi
+
+    # Add new entry
+    echo "$plugin_name|$pattern|$timestamp" >> "$PATTERN_CACHE_FILE"
+    log "Cached pattern for $plugin_name: $pattern"
+}
+
+# Function to check if repository exists
+check_repository_exists() {
+    local repo_url="$1"
+    log "Checking repository existence: $repo_url"
+    git ls-remote "$repo_url" &>/dev/null
+    local result=$?
+    if [ $result -eq 0 ]; then
+        log "Repository exists: $repo_url"
+    else
+        log "Repository does not exist: $repo_url"
+    fi
+    return $result
+}
+
+# Function to get pattern hints based on plugin name
+get_pattern_hints() {
+    local plugin_name="$1"
+    local hints=()
+
+    case "${plugin_name,,}" in
+        *payment*|*paypal*|*stripe*|*square*|*authorizenet*|*braintree*)
+            hints+=("Nop.Plugin.Payments.{name}")
+            ;;
+        *shipping*|*fedex*|*ups*|*usps*|*pickup*)
+            hints+=("Nop.Plugin.Shipping.{name}" "Nop.Plugin.Pickup.{name}")
+            ;;
+        *widget*|*slider*|*banner*|*carousel*|*gallery*)
+            hints+=("Nop.Plugin.Widgets.{name}")
+            ;;
+        *tax*|*avalara*|*taxjar*|*taxcloud*)
+            hints+=("Nop.Plugin.Tax.{name}")
+            ;;
+        *auth*|*facebook*|*google*|*oauth*|*openid*|*twitter*)
+            hints+=("Nop.Plugin.ExternalAuth.{name}")
+            ;;
+        *discount*|*rule*)
+            hints+=("Nop.Plugin.DiscountRules.{name}")
+            ;;
+        *api*|*webapi*|*rest*)
+            hints+=("Nop.Plugin.Api.{name}")
+            ;;
+        *multifactor*|*2fa*|*mfa*)
+            hints+=("Nop.Plugin.MultiFactorAuth.{name}")
+            ;;
+        *)
+            hints+=("Nop.Plugin.Misc.{name}" "Nop.Plugin.{name}")
+            ;;
+    esac
+
+    printf '%s\n' "${hints[@]}"
+}
+
+# Function to find the correct repository pattern
+find_repository_pattern() {
+    local plugin_name="$1"
+    local base_url="$2"
+
+    # Check cache first
+    local cached_pattern=$(get_cached_pattern "$plugin_name")
+    if [ -n "$cached_pattern" ]; then
+        log "Using cached pattern for $plugin_name: $cached_pattern"
+        echo "$cached_pattern"
+        return 0
+    fi
+
+    log "No cached pattern found for $plugin_name, trying patterns..."
+
+    # Get pattern hints and merge with standard patterns
+    local hints=($(get_pattern_hints "$plugin_name"))
+    local all_patterns=("${hints[@]}" "${PLUGIN_PATTERNS[@]}")
+
+    # Remove duplicates while preserving order
+    local unique_patterns=()
+    local seen=()
+    for pattern in "${all_patterns[@]}"; do
+        if [[ ! " ${seen[@]} " =~ " ${pattern} " ]]; then
+            unique_patterns+=("$pattern")
+            seen+=("$pattern")
+        fi
+    done
+
+    # Try each pattern
+    for pattern in "${unique_patterns[@]}"; do
+        local repo_slug="${pattern//\{name\}/$plugin_name}"
+        local repo_url="$base_url/$repo_slug"
+
+        log "Trying pattern: $pattern -> $repo_slug"
+
+        if check_repository_exists "$repo_url"; then
+            cache_pattern "$plugin_name" "$repo_slug"
+            echo "$repo_slug"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+# Function to suggest alternatives when no pattern works
+suggest_alternatives() {
+    local plugin_name="$1"
+
+    echo "❌ Repository not found with any known pattern for: $plugin_name"
+    echo ""
+    echo "🔍 Tried the following patterns:"
+    local hints=($(get_pattern_hints "$plugin_name"))
+    local all_patterns=("${hints[@]}" "${PLUGIN_PATTERNS[@]}")
+    local unique_patterns=()
+    local seen=()
+    for pattern in "${all_patterns[@]}"; do
+        if [[ ! " ${seen[@]} " =~ " ${pattern} " ]]; then
+            echo "   - ${pattern//\{name\}/$plugin_name}"
+            unique_patterns+=("$pattern")
+            seen+=("$pattern")
+        fi
+    done
+    echo ""
+    echo "💡 Suggestions:"
+    echo "1. Use manual pattern: clone --pattern 'Nop.Plugin.Category.{name}' $plugin_name"
+    echo "2. Use full repository name: clone --full-name 'Exact.Repository.Name'"
+    echo "3. Check repository name in Azure DevOps"
+    echo "4. Try pattern discovery: clone --discover $plugin_name"
+    echo ""
+    echo "📝 If you know the correct pattern, it will be cached for future use."
+}
 
 # Enable verbose mode if --verbose or -v is passed
 VERBOSE=false
@@ -50,7 +253,7 @@ fi
 # Function to echo messages in verbose mode
 log() {
   if [ "$VERBOSE" = true ]; then
-    echo "[DEBUG] $1"
+    echo "[DEBUG] $1" >&2
   fi
 }
 
@@ -58,13 +261,31 @@ log() {
 process_repository() {
   local operation="$1"
   local repo_name="$2"
-  local repo_slug="Nop.Plugin.Opensoft.$repo_name"
+  local provided_repo_slug="$3"  # Optional: pre-determined repo slug
+  local repo_slug=""
+
+  # Determine repository slug
+  if [[ -n "$provided_repo_slug" ]]; then
+    repo_slug="$provided_repo_slug"
+    log "Using provided repository slug: $repo_slug"
+  else
+    # Use pattern learning to find the correct repository slug
+    repo_slug=$(find_repository_pattern "$repo_name" "$DEVOPS_PROJECT")
+    if [ $? -ne 0 ] || [ -z "$repo_slug" ]; then
+      suggest_alternatives "$repo_name"
+      return 1
+    fi
+    log "Pattern learning found repository slug: $repo_slug"
+  fi
+
   local clone_dir="$PLUGINS_DIR/$repo_slug"
 
   if [[ "$operation" == "clone" ]]; then
     echo "--- Cloning $repo_name ---"
+    echo "Repository: $repo_slug"
   else
     echo "--- Removing $repo_name ---"
+    echo "Repository: $repo_slug"
   fi
 
   if [[ "$operation" == "clone" ]]; then
@@ -73,9 +294,20 @@ process_repository() {
       return 0
     fi
 
-    git clone "$DEVOPS_PROJECT/$repo_slug" "$clone_dir"
+    local repo_url="$DEVOPS_PROJECT/$repo_slug"
+    log "Cloning from: $repo_url"
+
+    git clone "$repo_url" "$clone_dir"
     if [ $? -ne 0 ]; then
-      echo "Error cloning $repo_slug. Skipping."
+      echo "Error cloning $repo_slug."
+      # If we used pattern learning and it failed, remove from cache
+      if [[ -z "$provided_repo_slug" ]]; then
+        log "Removing failed pattern from cache"
+        if [ -f "$PATTERN_CACHE_FILE" ]; then
+          grep -v "^$repo_name|" "$PATTERN_CACHE_FILE" > "$PATTERN_CACHE_FILE.tmp" 2>/dev/null || true
+          mv "$PATTERN_CACHE_FILE.tmp" "$PATTERN_CACHE_FILE" 2>/dev/null || true
+        fi
+      fi
       return 1
     fi
 
@@ -94,7 +326,8 @@ process_repository() {
     if [ -f "Plugins/$repo_slug/$repo_slug.csproj" ]; then
       # Check if dotnet command is available
       if ! command -v dotnet &> /dev/null; then
-        echo "dotnet command not found. Adding project to solution manually..."        # Generate a GUID for the project
+        echo "dotnet command not found. Adding project to solution manually..."
+        # Generate a GUID for the project
         project_guid=$(uuidgen | tr '[:lower:]' '[:upper:]')
 
         # Check if project already exists in solution
@@ -137,11 +370,15 @@ process_repository() {
     fi
 
     cd "$SOLUTION_DIR" || return 1
+    # Use dotnet sln remove since we have a placeholder plugin to prevent empty folder removal
     if command -v dotnet &> /dev/null; then
-      dotnet sln "$CHOSEN_SOLUTION" remove "Plugins/$repo_slug/$repo_slug.csproj" 2>/dev/null
-      echo "Project $repo_slug removed from solution."
+      dotnet sln "$CHOSEN_SOLUTION" remove "Plugins/$repo_slug/$repo_slug.csproj"
+      if [ $? -eq 0 ]; then
+        echo "Project $repo_slug removed from solution."
+      else
+        echo "Warning: Failed to remove $repo_slug from solution (may not have been in solution)."
+      fi
     else
-      # Manually remove from solution file
       echo "dotnet command not found. Removing project from solution manually..."
 
       # First, extract the project GUID from the solution file
@@ -190,6 +427,11 @@ REMOVE=false
 SITE_MODE=false
 REPO_NAME=""
 SITE_NAME=""
+MANUAL_PATTERN=""
+FULL_NAME=""
+DISCOVER_MODE=false
+LIST_PATTERNS=false
+CLEAR_CACHE=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -206,6 +448,36 @@ while [[ $# -gt 0 ]]; do
       SITE_MODE=true
       shift
       ;;
+    --pattern)
+      if [[ -z "$2" ]]; then
+        echo "Error: --pattern requires a pattern argument"
+        echo "Example: clone --pattern 'Nop.Plugin.Misc.{name}' PluginName"
+        exit 1
+      fi
+      MANUAL_PATTERN="$2"
+      shift 2
+      ;;
+    --full-name)
+      if [[ -z "$2" ]]; then
+        echo "Error: --full-name requires a repository name argument"
+        echo "Example: clone --full-name 'Nop.Plugin.Exact.Repository.Name'"
+        exit 1
+      fi
+      FULL_NAME="$2"
+      shift 2
+      ;;
+    --discover)
+      DISCOVER_MODE=true
+      shift
+      ;;
+    --list-patterns)
+      LIST_PATTERNS=true
+      shift
+      ;;
+    --clear-cache)
+      CLEAR_CACHE=true
+      shift
+      ;;
     -*)
       # Handle combined flags like -s or check for invalid flags
       if [[ "$1" == "-r" ]]; then
@@ -213,7 +485,7 @@ while [[ $# -gt 0 ]]; do
         exit 1
       else
         echo "Error: Unknown option '$1'"
-        echo "Usage: clone [--verbose | -v] [--remove | -rm] [--site | -s] <repo-name-or-site-name>"
+        echo "Usage: clone [--verbose | -v] [--remove | -rm] [--site | -s] [--pattern <pattern>] [--full-name <name>] [--discover] [--list-patterns] [--clear-cache] <repo-name-or-site-name>"
         exit 1
       fi
       ;;
@@ -221,6 +493,10 @@ while [[ $# -gt 0 ]]; do
       # This should be the repository name or site name
       if [[ $SITE_MODE == true ]]; then
         SITE_NAME="$1"
+      elif [[ -n "$FULL_NAME" ]]; then
+        # Full name already provided, this is unexpected
+        echo "Error: Unexpected argument '$1' when using --full-name"
+        exit 1
       else
         REPO_NAME="$1"
       fi
@@ -228,6 +504,80 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+# Handle utility commands first
+if [[ $LIST_PATTERNS == true ]]; then
+  echo "Known NopCommerce plugin patterns:"
+  for i in "${!PLUGIN_PATTERNS[@]}"; do
+    echo "  $((i+1)). ${PLUGIN_PATTERNS[$i]}"
+  done
+  exit 0
+fi
+
+if [[ $CLEAR_CACHE == true ]]; then
+  if [ -f "$PATTERN_CACHE_FILE" ]; then
+    rm -f "$PATTERN_CACHE_FILE"
+    echo "Pattern cache cleared successfully."
+  else
+    echo "Pattern cache file does not exist."
+  fi
+  exit 0
+fi
+
+# Handle discovery mode
+if [[ $DISCOVER_MODE == true ]]; then
+  if [[ -z "$REPO_NAME" ]]; then
+    echo "Error: Discovery mode requires a plugin name."
+    echo "Usage: clone --discover <plugin-name>"
+    exit 1
+  fi
+
+  echo "🔍 Discovering available patterns for: $REPO_NAME"
+  echo ""
+
+  DEVOPS_PROJECT="FarHeapSolutions@vs-ssh.visualstudio.com:v3/FarHeapSolutions/Nop%20Plugins"
+  hints=($(get_pattern_hints "$REPO_NAME"))
+  all_patterns=("${hints[@]}" "${PLUGIN_PATTERNS[@]}")
+  unique_patterns=()
+  seen=()
+  for pattern in "${all_patterns[@]}"; do
+    if [[ ! " ${seen[@]} " =~ " ${pattern} " ]]; then
+      unique_patterns+=("$pattern")
+      seen+=("$pattern")
+    fi
+  done
+
+  found_patterns=()
+  for pattern in "${unique_patterns[@]}"; do
+    repo_slug="${pattern//\{name\}/$REPO_NAME}"
+    repo_url="$DEVOPS_PROJECT/$repo_slug"
+
+    echo -n "Testing: $repo_slug ... "
+    if check_repository_exists "$repo_url"; then
+      echo "✅ EXISTS"
+      found_patterns+=("$repo_slug")
+    else
+      echo "❌ Not found"
+    fi
+  done
+
+  echo ""
+  if [ ${#found_patterns[@]} -eq 0 ]; then
+    echo "❌ No matching repositories found."
+    suggest_alternatives "$REPO_NAME"
+  elif [ ${#found_patterns[@]} -eq 1 ]; then
+    echo "✅ Found one matching repository: ${found_patterns[0]}"
+    echo "To clone: clone $REPO_NAME"
+  else
+    echo "✅ Found multiple matching repositories:"
+    for pattern in "${found_patterns[@]}"; do
+      echo "  - $pattern"
+    done
+    echo ""
+    echo "Multiple matches found. The first one will be used by default."
+  fi
+  exit 0
+fi
 
 # Validate arguments
 if [[ $SITE_MODE == true ]]; then
@@ -237,12 +587,23 @@ if [[ $SITE_MODE == true ]]; then
     exit 1
   fi
 else
-  if [[ -z "$REPO_NAME" ]]; then
-    echo "Usage: clone [--verbose | -v] [--remove | -rm] [--site | -s] <repo-name-or-site-name>"
+  if [[ -n "$FULL_NAME" ]]; then
+    REPO_SLUG="$FULL_NAME"
+    # Extract repo name from full name for display purposes
+    REPO_NAME=$(echo "$FULL_NAME" | sed 's/.*\.//')
+  elif [[ -n "$MANUAL_PATTERN" ]]; then
+    if [[ -z "$REPO_NAME" ]]; then
+      echo "Error: Manual pattern requires a plugin name."
+      echo "Usage: clone --pattern 'Nop.Plugin.Category.{name}' <plugin-name>"
+      exit 1
+    fi
+    REPO_SLUG="${MANUAL_PATTERN//\{name\}/$REPO_NAME}"
+  elif [[ -z "$REPO_NAME" ]]; then
+    echo "Usage: clone [options] <repo-name-or-site-name>"
+    echo "Try: clone --help for more information"
     exit 1
   fi
 fi
-REPO_SLUG="Nop.Plugin.Opensoft.$REPO_NAME"
 DEVOPS_PROJECT="FarHeapSolutions@vs-ssh.visualstudio.com:v3/FarHeapSolutions/Nop%20Plugins"
 
 # Get current directory
@@ -427,16 +788,30 @@ fi
 
 # Handle single repository operations
 if [[ $REMOVE == true ]]; then
-  echo "Removing repository '$REPO_SLUG'..."
-  process_repository "remove" "$REPO_NAME"
+  echo "Removing repository..."
+  if [[ -n "$REPO_SLUG" ]]; then
+    # Use predetermined repo slug (from manual pattern or full name)
+    process_repository "remove" "$REPO_NAME" "$REPO_SLUG"
+  else
+    # Use pattern learning
+    process_repository "remove" "$REPO_NAME"
+  fi
   cd "$CURRENT_DIR"
-  echo "Repository '$REPO_SLUG' removed successfully."
+  echo "Repository removal completed."
   exit 0
 fi
 
 # Clone the repository
-echo "Cloning repository '$REPO_SLUG'..."
-process_repository "clone" "$REPO_NAME"
+echo "Cloning repository..."
+if [[ -n "$REPO_SLUG" ]]; then
+  # Use predetermined repo slug (from manual pattern or full name)
+  echo "Using specified repository: $REPO_SLUG"
+  process_repository "clone" "$REPO_NAME" "$REPO_SLUG"
+else
+  # Use pattern learning
+  echo "Using pattern learning to find repository..."
+  process_repository "clone" "$REPO_NAME"
+fi
 
 cd "$CURRENT_DIR"
 echo "Script completed successfully."

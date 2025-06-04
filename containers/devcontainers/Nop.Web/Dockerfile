@@ -10,11 +10,42 @@ RUN dotnet workload update && \
     apt-get install -y \
         sudo \
         openssh-client \
-        rsync && rm -rf /var/lib/apt/lists/* \
-        zsh
+        rsync \
+        zsh \
+        git \
+        curl \
+        tree \
+        jq \
+        postgresql-client \
+        mysql-client \
+        docker.io \
+        containerd \
+        nodejs \
+        npm && \
+    rm -rf /var/lib/apt/lists/* && \
+    # Install Claude Code CLI globally via npm and create symlink
+    npm install -g @anthropic-ai/claude-code && \
+    # Ensure claude command is available in /usr/local/bin for all users
+    CLAUDE_PATH=$(npm root -g)/@anthropic-ai/claude-code/bin/claude && \
+    if [ -f "$CLAUDE_PATH" ]; then \
+        ln -sf "$CLAUDE_PATH" /usr/local/bin/claude; \
+    fi && \
+    echo "✓ Development tools installed successfully:" && \
+    echo "  - zsh: $(zsh --version)" && \
+    echo "  - git: $(git --version)" && \
+    echo "  - curl: $(curl --version | head -1)" && \
+    echo "  - jq: $(jq --version)" && \
+    echo "  - tree: $(tree --version)" && \
+    echo "  - psql: $(psql --version)" && \
+    echo "  - mysql: $(mysql --version)" && \
+    echo "  - docker: $(docker --version)" && \
+    echo "  - containerd: $(containerd --version)" && \
+    echo "  - node: $(node --version)" && \
+    echo "  - npm: $(npm --version)" && \
+    echo "  - claude: $(claude --version 2>/dev/null || echo 'installed')"
 WORKDIR /workspace
-# Ensure the .zshrc file exists in the build context before uncommenting the next line
-# COPY .zshrc /root/.zshrc
+# Copy .zshrc for both root and the IDE user
+COPY .zshrc /root/.zshrc
 
 # Accept build arguments for username, UID, and GID from docker-compose
 ARG IDE_USER
@@ -40,15 +71,21 @@ RUN if [ "$DEBUG" = "true" ]; then \
 # Remove container image user and group if they conflict with the remoteUser from docker-compose/devcontainer.json
 # This is important to avoid conflicts with the user and group IDs
 # Step 2: Delete user (if exists)
-RUN if grep -q ":${IDE_UID}:" /etc/passwd; then \
-      userdel --force -r $(grep ":${IDE_UID}:" /etc/passwd | cut -d: -f1); \
+RUN if [ -n "${IDE_UID}" ] && grep -q ":${IDE_UID}:" /etc/passwd; then \
+      EXISTING_USER=$(grep ":${IDE_UID}:" /etc/passwd | cut -d: -f1); \
+      if [ -n "${EXISTING_USER}" ]; then \
+        userdel --force -r "${EXISTING_USER}"; \
+      fi; \
     fi && \
     if [ "$DEBUG" = "true" ]; then \
         echo "User with UID ${IDE_UID} deleted if it existed."; \
     fi && \
     # Delete group if it matches IDE_GID
-    if grep -q ":${IDE_GID}:" /etc/group; then \
-      groupdel $(grep ":${IDE_GID}:" /etc/group | cut -d: -f1); \
+    if [ -n "${IDE_GID}" ] && grep -q ":${IDE_GID}:" /etc/group; then \
+      EXISTING_GROUP=$(grep ":${IDE_GID}:" /etc/group | cut -d: -f1); \
+      if [ -n "${EXISTING_GROUP}" ]; then \
+        groupdel "${EXISTING_GROUP}"; \
+      fi; \
     fi && \
     if [ "$DEBUG" = "true" ]; then \
         echo "Group with GID ${IDE_GID} deleted if it existed."; \
@@ -91,6 +128,20 @@ RUN set -eux && \
         echo "Verifying user creation..."; \
     fi && \
     getent passwd "${IDE_USER}" || (echo "Error: User ${IDE_USER} was not created!" && exit 1)
+
+# Copy .zshrc to the IDE user's home directory and install Oh My Zsh
+RUN cp /root/.zshrc /home/${IDE_USER}/.zshrc && \
+    chown ${IDE_USER}:${IDE_USER} /home/${IDE_USER}/.zshrc && \
+    # Install Oh My Zsh for root
+    sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended && \
+    # Install Oh My Zsh for IDE_USER
+    sudo -u ${IDE_USER} sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended && \
+    # Set zsh as default shell for IDE_USER
+    chsh -s /usr/bin/zsh ${IDE_USER}
+
+# Install Claude CLI for the IDE user (in case they're using nvm or a different npm)
+RUN sudo -u ${IDE_USER} bash -c "source /home/${IDE_USER}/.zshrc && npm install -g @anthropic-ai/claude-code" || \
+    echo "Note: Claude CLI installation for user failed, but system installation should be available"
 
 
 # in debug mode, show the current working directory and its contents
