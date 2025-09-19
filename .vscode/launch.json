@@ -6,9 +6,9 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/bin/Debug/net9.0/Nop.Web.dll",
+            "program": "${workspaceFolder}/src/Presentation/Nop.Web/bin/Debug/net9.0/Nop.Web.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/bin/Debug/net9.0/",
+            "cwd": "${workspaceFolder}/src/Presentation/Nop.Web",
             "stopAtEntry": false,
             "serverReadyAction": {
                 "action": "openExternally",
@@ -17,9 +17,6 @@
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
                 "ASPNETCORE_URLS": "http://localhost:5000"
-            },
-            "sourceFileMap": {
-                "/Views": "${workspaceFolder}/bin/Debug/net9.0/Views"
             }
         }
     ]
