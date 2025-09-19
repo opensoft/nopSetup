@@ -1,0 +1,27 @@
+# Test Dockerfile for Claude CLI installation
+FROM mcr.microsoft.com/dotnet/sdk:9.0-noble
+
+# Install basic tools and Node.js
+RUN apt-get update && \
+    apt-get install -y \
+        sudo \
+        curl \
+        git \
+        zsh \
+        jq \
+        tree \
+        postgresql-client \
+        mysql-client \
+        docker.io \
+        containerd \
+        nodejs \
+        npm && \
+    rm -rf /var/lib/apt/lists/* && \
+    # Install Claude Code CLI globally via npm \
+    npm install -g @anthropic-ai/claude-code && \
+    echo "✓ Development tools installed successfully:" && \
+    echo "  - node: $(node --version)" && \
+    echo "  - npm: $(npm --version)" && \
+    echo "  - claude: $(claude --version 2>&1 || echo 'Claude CLI installed but version check failed')"
+
+WORKDIR /workspace
