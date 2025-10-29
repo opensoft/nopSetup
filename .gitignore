@@ -15,3 +15,4 @@ nopSolution/*
 !nopSolution/.devcontainer/
 !nopSolution/.devcontainer/**/*
 nopPlugins/src/nopCommerce.sln
+.zshrc

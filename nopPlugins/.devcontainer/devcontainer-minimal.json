@@ -1,0 +1,21 @@
+{
+	"name": "nopPlugins-minimal",
+	"dockerComposeFile": "./docker-compose.yml",
+	"service": "nop.plg.web",
+	"workspaceFolder": "/workspace",
+	"shutdownAction": "stopCompose",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-dotnettools.csharp"
+			],
+			"settings": {
+				"terminal.integrated.defaultProfile.linux": "bash"
+			}
+		}
+	},
+	"mounts": [
+        "source=${localWorkspaceFolder}/bin,target=/workspace/bin,type=bind,consistency=cached",
+        "source=${localWorkspaceFolder}/src,target=/workspace/src,type=bind,consistency=cached"
+    ]
+}
