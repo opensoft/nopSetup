@@ -19,7 +19,7 @@ services:
             - GROUPID=${GROUPID:-1000}
             - DEBUG=${DEBUG:-false}             # Pass DEBUG to the container environment
         ports:
-            - "8080:8080"
+            - "${WEB_PORT:-8080}:8080"
         depends_on:
             nop.plg.mssql:                       # Updated service name to match changes
                 condition: service_started
@@ -43,7 +43,7 @@ services:
         networks:
             - nop.plg.net                        # Updated network name to match changes
         ports:
-            - "1433:1433"  # Expose SQL Server port
+            - "${MSSQL_PORT:-1433}:1433"  # Expose SQL Server port
 
 networks:
   nop.plg.net:                                  # Updated network name to match changes

@@ -10,7 +10,7 @@
 		"NOP_PLUGIN_PATH": "/workspace/src/Plugins"
 	},
 
-	"forwardPorts": [5000, 5001],
+	"forwardPorts": ["${env:INTERNAL_WEB_PORT}", "${env:INTERNAL_WEB_SSL_PORT}"],
 	"remoteUser": "${localEnv:USER}", // Dynamically use the host user when attaching to the container
 	"customizations": {
 	  "vscode": {
